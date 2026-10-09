@@ -1,19 +1,21 @@
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, Text } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { ConfirmButton } from '@/components/ConfirmButton';
-import { Body, Card, H1, Label, Row, Screen, Stat } from '@/components/ui';
+import { Body, Card, H1, Label, ProgressBar, Row, Screen, Stat } from '@/components/ui';
 import { formatDate } from '@/lib/dates';
 import { formatDuration, formatKm } from '@/lib/pace';
 import { personalRecords, RECORD_DISTANCES } from '@/lib/records';
 import { useStore } from '@/lib/store';
+import { useProgress } from '@/lib/useProgress';
 import { colors } from '@/lib/theme';
 
 export default function ProfileTab() {
   const { profile, runs, reset } = useStore();
   const router = useRouter();
   const prs = useMemo(() => personalRecords(runs), [runs]);
+  const progress = useProgress();
   if (!profile) return null;
   const totalKm = runs.reduce((s, r) => s + r.distanceKm, 0);
   const totalSec = runs.reduce((s, r) => s + r.durationSec, 0);
@@ -27,6 +29,53 @@ export default function ProfileTab() {
       <Body>
         {profile.sex === 'female' ? 'Female' : 'Male'} · {profile.age} · {profile.experience} · race {formatDate(profile.raceDate)}
       </Body>
+      {progress ? (
+        <Card testID="profile-level">
+          <Row style={{ justifyContent: 'space-between' }}>
+            <Text style={{ color: colors.text, fontSize: 20, fontWeight: '900' }} testID="profile-level-text">
+              Level {progress.level.level}
+            </Text>
+            <Text style={{ color: colors.textDim, fontWeight: '700' }}>
+              {progress.level.into} / {progress.level.needed} XP
+            </Text>
+          </Row>
+          <ProgressBar value={progress.level.into / progress.level.needed} />
+          <Body style={{ fontSize: 12 }}>
+            {progress.xp} XP total · {progress.streak ? `🔥 ${progress.streak}-week streak` : '3 runs this week starts a streak'}
+          </Body>
+        </Card>
+      ) : null}
+      {progress ? (
+        <Card testID="profile-badges">
+          <Label>
+            Badges · {progress.badges.filter((b) => b.unlocked).length}/{progress.badges.length}
+          </Label>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {progress.badges.map((b) => (
+              <View
+                key={b.id}
+                testID={`badge-${b.id}${b.unlocked ? '-unlocked' : ''}`}
+                style={{
+                  width: '31%',
+                  flexGrow: 1,
+                  alignItems: 'center',
+                  padding: 10,
+                  gap: 4,
+                  borderRadius: 14,
+                  backgroundColor: b.unlocked ? colors.surfaceAlt : 'transparent',
+                  borderWidth: 1,
+                  borderColor: b.unlocked ? colors.gold + '55' : colors.border,
+                  opacity: b.unlocked ? 1 : 0.55,
+                }}
+              >
+                <Text style={{ fontSize: 26 }}>{b.unlocked ? b.emoji : '🔒'}</Text>
+                <Text style={{ color: colors.text, fontWeight: '700', fontSize: 12, textAlign: 'center' }}>{b.title}</Text>
+                {!b.unlocked ? <Text style={{ color: colors.textMuted, fontSize: 10, textAlign: 'center' }}>{b.hint}</Text> : null}
+              </View>
+            ))}
+          </View>
+        </Card>
+      ) : null}
       <Card>
         <Row>
           <Stat label="Total km" value={formatKm(totalKm)} testID="profile-total-km" />

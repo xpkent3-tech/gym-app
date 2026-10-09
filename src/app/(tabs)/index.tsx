@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/Avatar';
+import { ChallengeCard } from '@/components/ChallengeCard';
+import { LevelChip } from '@/components/LevelChip';
 import { FriendRunCard } from '@/components/FriendRunCard';
 import { Segmented } from '@/components/Segmented';
 
@@ -17,6 +19,7 @@ import { rankRunner } from '@/lib/rank';
 import { useStore } from '@/lib/store';
 import { colors } from '@/lib/theme';
 import { useInvite } from '@/lib/useInvite';
+import { useProgress } from '@/lib/useProgress';
 
 function greeting() {
   const h = new Date().getHours();
@@ -27,6 +30,7 @@ export default function Home() {
   const { profile, runs, plan, friends } = useStore();
   const [feed, setFeed] = useState<'you' | 'friends'>('you');
   const invite = useInvite();
+  const progress = useProgress();
   const router = useRouter();
   const today = todayISO();
   const weekFrom = addDays(today, -6);
@@ -43,6 +47,7 @@ export default function Home() {
         <View style={{ gap: 2 }}>
           <Body>{greeting()},</Body>
           <H1 testID="home-greeting">{profile.name} 👟</H1>
+          {progress ? <LevelChip level={progress.level.level} streak={progress.streak} /> : null}
         </View>
         <Pressable onPress={() => router.push('/profile')} testID="home-profile" hitSlop={8}>
           <Avatar name={profile.name} color={colors.primary} size={44} />
@@ -58,6 +63,8 @@ export default function Home() {
       </Card>
 
       <TodayCard plan={plan} runs={runs} today={today} />
+
+      {progress ? <ChallengeCard challenge={progress.challenge} /> : null}
 
       {rank ? (
         <Card onPress={() => router.push('/rank')} testID="home-rank-card" style={{ borderColor: rank.tier.color + '66' }}>

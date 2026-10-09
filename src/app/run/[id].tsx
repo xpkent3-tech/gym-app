@@ -12,16 +12,22 @@ import { prsSetBy } from '@/lib/records';
 import { useStore } from '@/lib/store';
 import { colors } from '@/lib/theme';
 import { useInvite } from '@/lib/useInvite';
+import { celebrationFor } from '@/lib/progression';
+import { todayISO } from '@/lib/dates';
 import { runTypeMeta } from '@/lib/types';
 
 export default function RunDetail() {
   const { id, fresh } = useLocalSearchParams<{ id: string; fresh?: string }>();
   const router = useRouter();
-  const { runs, profile, deleteRun } = useStore();
+  const { runs, profile, deleteRun, plan, friends, invitesSent } = useStore();
   const run = runs.find((r) => r.id === id);
   const prs = useMemo(() => (run ? prsSetBy(run, runs) : []), [run, runs]);
   const rank = useMemo(() => (profile ? rankRunner(profile, runs) : null), [profile, runs]);
   const invite = useInvite();
+  const celebration = useMemo(
+    () => (run && profile && fresh === '1' ? celebrationFor({ profile, runs, plan, friends, invitesSent }, run.id, todayISO()) : null),
+    [run, profile, runs, plan, friends, invitesSent, fresh],
+  );
   const done = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
   if (!run) {
@@ -53,6 +59,32 @@ export default function RunDetail() {
       ) : (
         <H1>{meta.label} Run</H1>
       )}
+
+      {celebration ? (
+        <Card testID="celebration" style={{ borderColor: colors.primary + '88' }}>
+          <Row style={{ justifyContent: 'space-between' }}>
+            <Text style={{ color: colors.primary, fontSize: 24, fontWeight: '900' }} testID="celebration-xp">
+              +{celebration.xpGained} XP
+            </Text>
+            {celebration.levelUp ? <Pill text={`LEVEL ${celebration.levelUp} ⬆`} color={colors.success} testID="celebration-level" /> : null}
+          </Row>
+          {celebration.tierUp ? (
+            <Text style={{ color: colors.gold, fontWeight: '800', fontSize: 16 }} testID="celebration-tier">
+              📈 Rank up! You're now {celebration.tierUp}
+            </Text>
+          ) : null}
+          {celebration.newBadges.length ? (
+            <View style={{ gap: 6 }}>
+              <Label>Badges unlocked</Label>
+              <Row style={{ gap: 8, flexWrap: 'wrap' }}>
+                {celebration.newBadges.map((b) => (
+                  <Pill key={b.id} text={`${b.emoji} ${b.title}`} color={colors.gold} testID={`celebration-badge-${b.id}`} />
+                ))}
+              </Row>
+            </View>
+          ) : null}
+        </Card>
+      ) : null}
 
       <Card style={{ borderColor: meta.color + '66' }}>
         <Pill text={meta.label.toUpperCase()} color={meta.color} />

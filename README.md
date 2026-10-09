@@ -8,6 +8,8 @@ Stride is a React Native (Expo) app for marathon training. It aims for Hevy's fa
 - **Generated marathon plan**: 12–20 weeks with base/build/peak/taper phases, cut-back weeks and race week. "Today" tells you what to run, and logging it ticks it off.
 - **Percentile rank**: your Riegel-predicted marathon compared against a log-normal model of finish times for your sex and age group, with tiers (Starter → Elite) and the time you need for the next tier. A weekly-volume percentile too.
 - **Personal records** for 5K / 10K / half / marathon.
+- **Friends & invites**: friend codes, invite links (`/invite/CODE`) that survive onboarding, a friends feed with kudos, and a friends leaderboard with a "km to pass" nudge.
+- **Progression**: XP and levels, a weekly (rest-day-friendly) streak, a weekly challenge sized to your plan, a badge collection, and a post-run reward reveal (XP, level-up, badges, rank tier-up).
 
 ## Development
 

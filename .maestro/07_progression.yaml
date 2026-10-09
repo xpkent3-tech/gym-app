@@ -1,0 +1,69 @@
+url: ${APP_URL || 'http://localhost:8081'}
+name: XP, level-up, badges, challenge and tier-up celebration
+tags: [engagement]
+---
+- runFlow: subflows/onboard.yaml
+- assertVisible:
+    id: level-chip
+    text: "Lv 1"
+- assertVisible:
+    id: streak-chip
+    text: "Run 3. this week to start a streak"
+- assertVisible:
+    id: challenge-card
+# First 10 km run: 100 distance XP + 5K & 10K PRs = 300 XP → level 3, badges
+- tapOn:
+    id: tab-log
+- tapOn:
+    id: log-distance
+- inputText: "10"
+- tapOn:
+    id: log-duration
+- inputText: "50:00"
+- tapOn:
+    id: log-save
+- assertVisible:
+    id: celebration-xp
+    text: "\\+300 XP"
+- assertVisible:
+    id: celebration-level
+    text: "LEVEL 3.*"
+- assertVisible:
+    id: celebration-badge-first-run
+- assertVisible:
+    id: celebration-badge-ten-k
+- tapOn:
+    id: run-done
+- assertVisible:
+    id: level-chip
+    text: "Lv 3"
+- assertVisible:
+    id: challenge-progress
+    text: "10 / .* km to go"
+# A much faster 10K the same day → rank tier-up
+- tapOn:
+    id: tab-log
+- tapOn:
+    id: log-distance
+- inputText: "10"
+- tapOn:
+    id: log-duration
+- inputText: "43:00"
+- tapOn:
+    id: log-save
+- assertVisible:
+    id: celebration-tier
+    text: ".*Rank up! You're now Sub-Elite"
+- takeScreenshot: .maestro/output/celebration
+- tapOn:
+    id: run-done
+# Badge grid on Profile
+- tapOn:
+    id: home-profile
+- assertVisible:
+    id: profile-level-text
+- assertVisible:
+    id: badge-first-run-unlocked
+- assertVisible:
+    id: badge-sub-elite-unlocked
+- assertVisible: "80 km to go"
