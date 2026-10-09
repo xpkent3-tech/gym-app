@@ -33,31 +33,31 @@ function WeekCard({ week, runs, today }: { week: PlanWeek; runs: Run[]; today: s
         </View>
       </View>
       {week.sessions.map((s) => {
-            const meta = runTypeMeta(s.type);
-            const sDone = isSessionDone(s, runs);
-            const canLog = !sDone && s.date <= today;
-            return (
-              <Pressable
-                key={s.date}
-                disabled={!canLog}
-                testID={`session-${s.date}`}
-                onPress={() => router.push({ pathname: '/log', params: { type: s.type, distance: String(s.distanceKm) } })}
-                style={{ flexDirection: 'row', gap: 12, alignItems: 'center', paddingVertical: 8, borderTopWidth: 1, borderTopColor: colors.border }}
-              >
-                <Text style={{ color: s.date === today ? colors.primary : colors.textMuted, width: 34, fontWeight: '700' }}>{weekdayShort(s.date)}</Text>
-                <View style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, backgroundColor: meta.color }} />
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.text, fontWeight: '700' }}>
-                    {s.title} · {s.distanceKm} km
-                  </Text>
-                  <Text style={{ color: colors.textDim, fontSize: 13 }} numberOfLines={2}>
-                    {s.description}
-                  </Text>
-                </View>
-                <Text style={{ fontSize: 18, color: sDone ? colors.success : colors.textMuted }}>{sDone ? '✓' : s.date < today ? '–' : '○'}</Text>
-              </Pressable>
-            );
-          })}
+        const meta = runTypeMeta(s.type);
+        const sDone = isSessionDone(s, runs);
+        const canLog = !sDone && s.date <= today;
+        return (
+          <Pressable
+            key={s.date}
+            disabled={!canLog}
+            testID={`session-${s.date}`}
+            onPress={() => router.push({ pathname: '/log', params: { type: s.type, distance: String(s.distanceKm) } })}
+            style={{ flexDirection: 'row', gap: 12, alignItems: 'center', paddingVertical: 8, borderTopWidth: 1, borderTopColor: colors.border }}
+          >
+            <Text style={{ color: s.date === today ? colors.primary : colors.textMuted, width: 34, fontWeight: '700' }}>{weekdayShort(s.date)}</Text>
+            <View style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, backgroundColor: meta.color }} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.text, fontWeight: '700' }}>
+                {s.title} · {s.distanceKm} km
+              </Text>
+              <Text style={{ color: colors.textDim, fontSize: 13 }} numberOfLines={2}>
+                {s.description}
+              </Text>
+            </View>
+            <Text style={{ fontSize: 18, color: sDone ? colors.success : colors.textMuted }}>{sDone ? '✓' : s.date < today ? '–' : '○'}</Text>
+          </Pressable>
+        );
+      })}
     </Card>
   );
 }

@@ -31,6 +31,8 @@ export interface Profile {
   planStart: string;
   raceResult?: RaceResult;
   createdAt: number;
+  /** Shareable code others use to add you, e.g. STR-4F2A9Q. */
+  friendCode?: string;
 }
 
 export const RUN_TYPES: { type: RunType; label: string; color: string }[] = [

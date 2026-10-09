@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { ToastProvider } from '@/components/Toast';
 import { StoreProvider, useStore } from '@/lib/store';
 import { colors } from '@/lib/theme';
 
@@ -27,10 +28,13 @@ function RootStack() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="log" options={{ presentation: 'modal' }} />
         <Stack.Screen name="run/[id]" />
+        <Stack.Screen name="friend/[id]" />
+        <Stack.Screen name="profile" />
       </Stack.Protected>
       <Stack.Protected guard={!onboarded}>
         <Stack.Screen name="onboarding" />
       </Stack.Protected>
+      <Stack.Screen name="invite/[code]" />
     </Stack>
   );
 }
@@ -40,8 +44,10 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider value={theme}>
         <StoreProvider>
-          <StatusBar style="light" />
-          <RootStack />
+          <ToastProvider>
+            <StatusBar style="light" />
+            <RootStack />
+          </ToastProvider>
         </StoreProvider>
       </ThemeProvider>
     </SafeAreaProvider>

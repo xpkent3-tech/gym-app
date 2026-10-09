@@ -45,7 +45,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen name="rank" options={{ title: 'Rank', tabBarIcon: icon('trophy'), tabBarButtonTestID: 'tab-rank' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: icon('person'), tabBarButtonTestID: 'tab-profile' }} />
+      <Tabs.Screen name="friends" options={{ title: 'Friends', tabBarIcon: icon('people'), tabBarButtonTestID: 'tab-friends' }} />
     </Tabs>
   );
 }

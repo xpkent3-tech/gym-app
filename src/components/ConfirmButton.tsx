@@ -3,7 +3,19 @@ import { useState } from 'react';
 import { Body, Button, Card, Row } from '@/components/ui';
 
 /** Two-step destructive button: first tap reveals an inline confirmation (works identically on web and native). */
-export function ConfirmButton({ title, message, confirmTitle, onConfirm, testID }: { title: string; message: string; confirmTitle: string; onConfirm: () => void; testID: string }) {
+export function ConfirmButton({
+  title,
+  message,
+  confirmTitle,
+  onConfirm,
+  testID,
+}: {
+  title: string;
+  message: string;
+  confirmTitle: string;
+  onConfirm: () => void;
+  testID: string;
+}) {
   const [asking, setAsking] = useState(false);
   if (!asking) return <Button title={title} variant="danger" onPress={() => setAsking(true)} testID={testID} />;
   return (

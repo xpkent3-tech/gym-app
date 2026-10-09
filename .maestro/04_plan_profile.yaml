@@ -26,13 +26,18 @@ tags: [core]
 - assertVisible:
     id: plan-week-1
 - tapOn:
-    id: tab-profile
+    id: tab-home
+- tapOn:
+    id: home-profile
 - assertVisible:
     id: profile-name
     text: "Kent"
 - assertVisible:
     id: pr-10k
     text: "—"
+- assertVisible:
+    id: profile-code
+    text: "STR-.*"
 # Reset requires confirmation and returns to onboarding
 - tapOn:
     id: profile-reset

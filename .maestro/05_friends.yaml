@@ -1,0 +1,106 @@
+url: ${APP_URL || 'http://localhost:8081'}
+name: Add friends by code and search, feed with kudos, leaderboard, remove
+tags: [social]
+---
+- runFlow: subflows/onboard.yaml
+# Empty states point to friends/invites
+- tapOn:
+    id: feed-friends
+- assertVisible:
+    id: feed-empty
+- tapOn:
+    id: tab-rank
+- tapOn:
+    id: rank-view-friends
+- assertVisible:
+    id: board-empty
+- tapOn:
+    id: tab-friends
+- assertVisible:
+    id: friends-empty
+- assertVisible:
+    id: friends-my-code
+    text: "STR-[0-9A-Z]{6}"
+# Invite falls back to copying the link on desktop web
+- tapOn:
+    id: friends-invite
+- assertVisible:
+    id: toast
+    text: "Invite link copied.*"
+- assertVisible: "1 invite sent"
+# Unknown code is rejected
+- tapOn:
+    id: friends-code-input
+- inputText: "STR-NOPE00"
+- tapOn:
+    id: friends-code-add
+- assertVisible: "No runner found with that code"
+# Leo's code (lowercase, no prefix) works
+- tapOn:
+    id: friends-code-input
+- eraseText: 20
+- inputText: "svw3wk"
+- tapOn:
+    id: friends-code-add
+- assertVisible:
+    id: toast
+    text: "Added Leo.*"
+# Search by name
+- tapOn:
+    id: friends-search
+- inputText: "maya"
+- assertVisible:
+    id: search-result-0
+- tapOn:
+    id: search-add-0
+- assertVisible: "Your friends · 2"
+# Friends feed + kudos
+- tapOn:
+    id: tab-home
+- tapOn:
+    id: feed-friends
+- assertVisible:
+    id: feed-item-0
+- tapOn:
+    id: kudos-0
+- assertVisible:
+    id: kudos-count-0
+    text: "Kudos given.*"
+- tapOn:
+    id: kudos-0
+- assertVisible:
+    id: kudos-count-0
+    text: "Kudos · .*"
+# Leaderboard with you + 2 friends
+- tapOn:
+    id: tab-rank
+- tapOn:
+    id: rank-view-friends
+- assertVisible:
+    id: board-summary
+    text: "Chasing 2 friends"
+- assertVisible:
+    id: board-you-place
+    text: "3"
+- assertVisible:
+    id: board-next
+    text: ".*to pass.*"
+- assertVisible: "Kent \\(you\\)"
+- tapOn:
+    id: board-marathon
+- assertVisible:
+    id: board-you-place
+- takeScreenshot: .maestro/output/leaderboard
+# Remove a friend from their profile
+- tapOn:
+    id: tab-friends
+- tapOn:
+    id: friend-row-0
+- assertVisible:
+    id: friend-name
+    text: "Leo Martins"
+- tapOn:
+    id: friend-remove
+- tapOn:
+    id: friend-remove-confirm
+- assertVisible: "Your friends · 1"

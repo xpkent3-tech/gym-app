@@ -1,0 +1,54 @@
+url: ${APP_URL || 'http://localhost:8081'}
+name: Invite links for new and existing users
+tags: [social, growth]
+---
+# Invalid invite
+- launchApp:
+    clearState: true
+- openLink: ${APP_URL || 'http://localhost:8081'}/invite/STR-NOPE00
+- extendedWaitUntil:
+    visible:
+      id: invite-invalid
+    timeout: 15000
+# New user: Maya's invite survives onboarding
+- openLink: ${APP_URL || 'http://localhost:8081'}/invite/STR-E7NWBX
+- extendedWaitUntil:
+    visible:
+      id: invite-title
+      text: "Maya wants to train with you"
+    timeout: 15000
+- tapOn:
+    id: invite-accept
+- assertVisible:
+    id: onboarding-invite
+- tapOn:
+    id: onboarding-name
+- inputText: Kent
+- tapOn:
+    id: onboarding-submit
+- extendedWaitUntil:
+    visible:
+      id: home-screen
+    timeout: 10000
+- tapOn:
+    id: tab-friends
+- assertVisible:
+    id: friend-row-0
+- assertVisible: "Maya Chen"
+# Existing user accepts Leo's invite
+- openLink: ${APP_URL || 'http://localhost:8081'}/invite/STR-SVW3WK
+- extendedWaitUntil:
+    visible:
+      id: invite-accept
+    timeout: 15000
+- tapOn:
+    id: invite-accept
+- assertVisible:
+    id: friends-screen
+- assertVisible: "Your friends · 2"
+# Re-opening an accepted invite doesn't duplicate
+- openLink: ${APP_URL || 'http://localhost:8081'}/invite/STR-SVW3WK
+- extendedWaitUntil:
+    visible:
+      id: invite-open
+    timeout: 15000

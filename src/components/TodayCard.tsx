@@ -32,7 +32,9 @@ export function TodayCard({ plan, runs, today }: { plan: PlanWeek[]; runs: Run[]
   if (st.kind === 'rest') {
     return (
       <Card testID="today-card">
-        <Label>Today · Week {st.week.index + 1} · {st.week.phase}</Label>
+        <Label>
+          Today · Week {st.week.index + 1} · {st.week.phase}
+        </Label>
         <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>Rest day</Text>
         <Body>
           Recovery is training too.
@@ -48,7 +50,9 @@ export function TodayCard({ plan, runs, today }: { plan: PlanWeek[]; runs: Run[]
   return (
     <Card testID="today-card" style={{ borderColor: meta.color + '66' }}>
       <Row style={{ justifyContent: 'space-between' }}>
-        <Label>Today · Week {week.index + 1} · {week.phase}</Label>
+        <Label>
+          Today · Week {week.index + 1} · {week.phase}
+        </Label>
         {done ? <Pill text="DONE ✓" color={colors.success} testID="today-done" /> : null}
       </Row>
       <Row style={{ gap: 10 }}>

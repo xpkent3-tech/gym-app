@@ -25,7 +25,15 @@ export default function LogRun() {
   const km = parseDistance(distance);
   const sec = parseDuration(duration);
   const valid = km !== null && sec !== null;
-  const hint = !distance ? 'Enter a distance' : km === null ? 'Distance must be above 0' : !duration ? 'Enter a time' : sec === null ? 'Time should look like 45:00 or 1:30:00' : null;
+  const hint = !distance
+    ? 'Enter a distance'
+    : km === null
+      ? 'Distance must be above 0'
+      : !duration
+        ? 'Enter a time'
+        : sec === null
+          ? 'Time should look like 45:00 or 1:30:00'
+          : null;
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
 

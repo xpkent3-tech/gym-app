@@ -11,6 +11,7 @@ import { rankRunner } from '@/lib/rank';
 import { prsSetBy } from '@/lib/records';
 import { useStore } from '@/lib/store';
 import { colors } from '@/lib/theme';
+import { useInvite } from '@/lib/useInvite';
 import { runTypeMeta } from '@/lib/types';
 
 export default function RunDetail() {
@@ -20,6 +21,7 @@ export default function RunDetail() {
   const run = runs.find((r) => r.id === id);
   const prs = useMemo(() => (run ? prsSetBy(run, runs) : []), [run, runs]);
   const rank = useMemo(() => (profile ? rankRunner(profile, runs) : null), [profile, runs]);
+  const invite = useInvite();
   const done = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
   if (!run) {
@@ -83,6 +85,7 @@ export default function RunDetail() {
         </Card>
       ) : null}
 
+      {isFresh && prs.length ? <Button title="⚔️  Challenge a friend to beat it" variant="secondary" onPress={invite} testID="run-challenge" /> : null}
       {isFresh ? (
         <Button title="Done" onPress={done} testID="run-done" />
       ) : (

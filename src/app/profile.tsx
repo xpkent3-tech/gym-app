@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { Body, Card, H1, Label, Row, Screen, Stat } from '@/components/ui';
@@ -20,6 +20,9 @@ export default function ProfileTab() {
 
   return (
     <Screen testID="profile-screen">
+      <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={12} testID="profile-back">
+        <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '600' }}>‹ Back</Text>
+      </Pressable>
       <H1 testID="profile-name">{profile.name}</H1>
       <Body>
         {profile.sex === 'female' ? 'Female' : 'Male'} · {profile.age} · {profile.experience} · race {formatDate(profile.raceDate)}
@@ -29,6 +32,14 @@ export default function ProfileTab() {
           <Stat label="Total km" value={formatKm(totalKm)} testID="profile-total-km" />
           <Stat label="Runs" value={String(runs.length)} />
           <Stat label="Time" value={formatDuration(totalSec)} />
+        </Row>
+      </Card>
+      <Card>
+        <Row style={{ justifyContent: 'space-between' }}>
+          <Label>Friend code</Label>
+          <Text style={{ color: colors.text, fontWeight: '800', letterSpacing: 1 }} testID="profile-code">
+            {profile.friendCode}
+          </Text>
         </Row>
       </Card>
       <Card testID="profile-prs">

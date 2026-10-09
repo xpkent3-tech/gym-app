@@ -93,7 +93,19 @@ export function Button({
   );
 }
 
-export function Chip({ label, selected, onPress, color = colors.primary, testID }: { label: string; selected?: boolean; onPress?: () => void; color?: string; testID?: string }) {
+export function Chip({
+  label,
+  selected,
+  onPress,
+  color = colors.primary,
+  testID,
+}: {
+  label: string;
+  selected?: boolean;
+  onPress?: () => void;
+  color?: string;
+  testID?: string;
+}) {
   return (
     <Pressable
       onPress={onPress}
@@ -149,10 +161,32 @@ export const styles = StyleSheet.create({
   h2: { color: colors.text, fontSize: 18, fontWeight: '700' },
   label: { color: colors.textDim, fontSize: 12, fontWeight: '700', letterSpacing: 0.8, textTransform: 'uppercase' },
   body: { color: colors.textDim, fontSize: 15, lineHeight: 21 },
-  card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(4), borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, gap: space(2) },
-  button: { minHeight: 50, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space(5), flexDirection: 'row', gap: space(2) },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: space(4),
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    gap: space(2),
+  },
+  button: {
+    minHeight: 50,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: space(5),
+    flexDirection: 'row',
+    gap: space(2),
+  },
   buttonText: { fontSize: 16, fontWeight: '700' },
-  chip: { paddingHorizontal: space(3.5), paddingVertical: space(2), borderRadius: radius.pill, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  chip: {
+    paddingHorizontal: space(3.5),
+    paddingVertical: space(2),
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
   chipText: { color: colors.textDim, fontWeight: '600', fontSize: 14 },
   stat: { flex: 1, gap: 2 },
   statValue: { color: colors.text, fontSize: 22, fontWeight: '800' },

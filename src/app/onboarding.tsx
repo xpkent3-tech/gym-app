@@ -6,6 +6,7 @@ import { Body, Button, Card, Chip, H1, Label, Row, Screen } from '@/components/u
 import { raceDateInWeeks, todayISO } from '@/lib/dates';
 import { parseDuration } from '@/lib/pace';
 import { planStartFor } from '@/lib/plan';
+import { runnerById } from '@/lib/community';
 import { useStore } from '@/lib/store';
 import { colors } from '@/lib/theme';
 import type { Experience, Sex } from '@/lib/types';
@@ -19,7 +20,8 @@ const RECENT_RACES = [
 ];
 
 export default function Onboarding() {
-  const { setProfile } = useStore();
+  const { setProfile, pendingInvite } = useStore();
+  const inviter = pendingInvite ? runnerById(pendingInvite) : undefined;
   const [name, setName] = useState('');
   const [sex, setSex] = useState<Sex>('male');
   const [age, setAge] = useState('32');
@@ -58,6 +60,14 @@ export default function Onboarding() {
         <Body>Log runs in seconds, follow a plan built around your race, and find out what percentile you're in.</Body>
       </View>
 
+      {inviter ? (
+        <Card style={{ borderColor: colors.primary }} testID="onboarding-invite">
+          <Body>
+            🤝 <Body style={{ color: colors.text, fontWeight: '700' }}>{inviter.name}</Body> invited you. You'll be friends as soon as you finish setting up.
+          </Body>
+        </Card>
+      ) : null}
+
       <Card>
         <Field label="Your name" value={name} onChangeText={setName} placeholder="e.g. Alex" testID="onboarding-name" autoCapitalize="words" />
         <Label>Sex (for age-graded ranking)</Label>
@@ -91,7 +101,13 @@ export default function Onboarding() {
         <Body>Gives you an instant rank before you log anything.</Body>
         <Row style={{ gap: 8, flexWrap: 'wrap' }}>
           {RECENT_RACES.map((r) => (
-            <Chip key={r.label} label={r.label} selected={raceKm === r.km} onPress={() => setRaceKm(raceKm === r.km ? null : r.km)} testID={`recent-${r.label}`} />
+            <Chip
+              key={r.label}
+              label={r.label}
+              selected={raceKm === r.km}
+              onPress={() => setRaceKm(raceKm === r.km ? null : r.km)}
+              testID={`recent-${r.label}`}
+            />
           ))}
         </Row>
         {raceKm ? (

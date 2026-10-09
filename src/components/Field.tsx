@@ -22,6 +22,16 @@ export function Field({ label, hint, error, testID, ...props }: TextInputProps &
 
 const s = StyleSheet.create({
   label: { color: colors.textDim, fontSize: 13, fontWeight: '600' },
-  input: { backgroundColor: colors.surfaceAlt, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, color: colors.text, fontSize: 17, paddingHorizontal: space(3.5), paddingVertical: space(3), fontWeight: '600' },
+  input: {
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    color: colors.text,
+    fontSize: 17,
+    paddingHorizontal: space(3.5),
+    paddingVertical: space(3),
+    fontWeight: '600',
+  },
   hint: { color: colors.textMuted, fontSize: 12 },
 });
