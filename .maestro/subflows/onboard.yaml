@@ -1,0 +1,29 @@
+# Fresh install → completes onboarding as a 32-year-old male with a 10K PB of ${RACE_TIME || 'none'}.
+url: ${APP_URL || 'http://localhost:8081'}
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: onboarding-screen
+    timeout: 15000
+- tapOn:
+    id: onboarding-name
+- inputText: ${NAME || 'Kent'}
+- tapOn:
+    id: race-16
+- runFlow:
+    when:
+      true: ${RACE_TIME != null}
+    commands:
+      - tapOn:
+          id: recent-10K
+      - tapOn:
+          id: onboarding-race-time
+      - inputText: ${RACE_TIME}
+- tapOn:
+    id: onboarding-submit
+- extendedWaitUntil:
+    visible:
+      id: home-screen
+    timeout: 10000

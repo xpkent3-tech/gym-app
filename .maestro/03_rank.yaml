@@ -1,0 +1,46 @@
+url: ${APP_URL || 'http://localhost:8081'}
+name: Percentile rank from a race result and from logged runs
+tags: [core, rank]
+---
+- runFlow:
+    file: subflows/onboard.yaml
+    env:
+      RACE_TIME: "50:00"
+# 10K in 50:00 → ~3:50 marathon → top 21% of men 20–39 (Advanced)
+- assertVisible:
+    id: home-rank-card
+- tapOn:
+    id: tab-rank
+- assertVisible:
+    id: rank-top-pct
+    text: "Top 21%"
+- assertVisible:
+    id: rank-tier
+    text: "Advanced"
+- assertVisible:
+    id: rank-predicted
+    text: "3:50:01"
+- assertVisible:
+    id: rank-next
+- assertVisible: "No runs in the last 7 days.*"
+# A faster run improves the rank and unlocks a volume percentile
+- tapOn:
+    id: tab-log
+- tapOn:
+    id: log-distance
+- inputText: "21.1"
+- tapOn:
+    id: log-duration
+- inputText: "1:35:00"
+- tapOn:
+    id: log-save
+- tapOn:
+    id: run-done
+- tapOn:
+    id: tab-rank
+- assertVisible:
+    id: rank-top-pct
+    text: "Top 6%"
+- assertVisible:
+    id: rank-volume-pct
+- takeScreenshot: .maestro/output/rank

@@ -1,0 +1,39 @@
+url: ${APP_URL || 'http://localhost:8081'}
+name: Onboarding gates the app and personalises Home
+tags: [core]
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Train for your marathon.*"
+    timeout: 15000
+# Name is required: submitting without one keeps you on onboarding
+- tapOn:
+    id: onboarding-submit
+- assertVisible:
+    id: onboarding-screen
+- tapOn:
+    id: onboarding-name
+- inputText: Kent
+- tapOn:
+    id: exp-advanced
+- tapOn:
+    id: race-12
+- tapOn:
+    id: onboarding-submit
+- assertVisible:
+    id: home-greeting
+    text: "Kent.*"
+- assertVisible:
+    id: history-empty
+- assertVisible:
+    id: today-card
+# Persistence: a relaunch without clearing state skips onboarding
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: home-screen
+    timeout: 15000
+- assertNotVisible:
+    id: onboarding-screen
+- takeScreenshot: .maestro/output/onboarding-home

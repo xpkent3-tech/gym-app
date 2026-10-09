@@ -1,0 +1,52 @@
+url: ${APP_URL || 'http://localhost:8081'}
+name: Log a run, see pace + PR, then delete it
+tags: [core]
+---
+- runFlow: subflows/onboard.yaml
+- tapOn:
+    id: tab-log
+- assertVisible:
+    id: log-screen
+# Save is blocked until the form is valid
+- assertVisible:
+    id: log-hint
+    text: "Enter a distance"
+- tapOn:
+    id: type-tempo
+- tapOn:
+    id: log-distance
+- inputText: "10"
+- tapOn:
+    id: log-duration
+- inputText: "50:00"
+- assertVisible:
+    id: log-pace
+    text: "5:00"
+- tapOn:
+    id: effort-7
+- tapOn:
+    id: log-save
+# Post-run summary celebrates the first PRs and shows the rank
+- assertVisible: "New personal record!"
+- assertVisible:
+    id: detail-pace
+    text: "5:00"
+- assertVisible:
+    id: detail-rank
+- takeScreenshot: .maestro/output/run-saved
+- tapOn:
+    id: run-done
+- assertVisible:
+    id: run-card-0
+- assertVisible:
+    id: home-week-km
+    text: "10 km"
+# Detail → delete with inline confirmation
+- tapOn:
+    id: run-card-0
+- tapOn:
+    id: run-delete
+- tapOn:
+    id: run-delete-confirm
+- assertVisible:
+    id: history-empty

@@ -1,0 +1,18 @@
+schema: spec-driven
+
+context: |
+  Stride is a React Native (Expo SDK 57, Expo Router, TypeScript) marathon-training app,
+  modeled on Hevy's logging UX (fast logging, history feed, PRs, routines) but for running.
+  Gamification is inspired by Zynga-style retention loops (streaks, XP/levels, daily goals,
+  social comparison) and must stay honest: no dark patterns, no pay-to-win.
+  The app is offline-first: all state lives on-device (AsyncStorage); "community" data such
+  as percentiles and friends is simulated from published running-population statistics until
+  a backend exists.
+  End-to-end tests use Maestro against the web build (Chromium); every interactive element a
+  flow touches must have a stable testID.
+
+rules:
+  proposal:
+    - State what is out of scope
+  tasks:
+    - Every change includes Maestro flow updates and unit tests for pure logic

@@ -1,0 +1,48 @@
+url: ${APP_URL || 'http://localhost:8081'}
+name: Plan schedule, records on Profile, reset
+tags: [core]
+---
+- runFlow: subflows/onboard.yaml
+- tapOn:
+    id: tab-plan
+- assertVisible:
+    id: plan-screen
+- assertVisible:
+    id: plan-summary
+    text: "16 weeks.*"
+# Jump to race week: the marathon is the final session
+- tapOn:
+    id: plan-race-week
+- assertVisible:
+    id: plan-week-16
+- assertVisible: "Race Day.*"
+- tapOn:
+    id: plan-prev
+- assertVisible:
+    id: plan-week-15
+- assertVisible: "TAPER"
+- tapOn:
+    id: plan-this-week
+- assertVisible:
+    id: plan-week-1
+- tapOn:
+    id: tab-profile
+- assertVisible:
+    id: profile-name
+    text: "Kent"
+- assertVisible:
+    id: pr-10k
+    text: "—"
+# Reset requires confirmation and returns to onboarding
+- tapOn:
+    id: profile-reset
+- tapOn:
+    id: profile-reset-cancel
+- assertVisible:
+    id: profile-screen
+- tapOn:
+    id: profile-reset
+- tapOn:
+    id: profile-reset-confirm
+- assertVisible:
+    id: onboarding-screen
