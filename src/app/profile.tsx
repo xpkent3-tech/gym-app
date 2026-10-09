@@ -1,14 +1,16 @@
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { ConfirmButton } from '@/components/ConfirmButton';
-import { Body, Card, H1, Label, ProgressBar, Row, Screen, Stat } from '@/components/ui';
+import { Body, Button, Card, H1, Label, ProgressBar, Row, Screen, Stat } from '@/components/ui';
 import { formatDate } from '@/lib/dates';
 import { formatDuration, formatKm } from '@/lib/pace';
 import { personalRecords, RECORD_DISTANCES } from '@/lib/records';
 import { useStore } from '@/lib/store';
 import { useProgress } from '@/lib/useProgress';
+import { weeklyTotals } from '@/lib/history';
+import { todayISO } from '@/lib/dates';
 import { colors } from '@/lib/theme';
 
 export default function ProfileTab() {
@@ -16,6 +18,13 @@ export default function ProfileTab() {
   const router = useRouter();
   const prs = useMemo(() => personalRecords(runs), [runs]);
   const progress = useProgress();
+  const [allBadges, setAllBadges] = useState(false);
+  const badges = useMemo(() => {
+    const sorted = [...(progress?.badges ?? [])].sort((a, b) => Number(b.unlocked) - Number(a.unlocked));
+    return allBadges ? sorted : sorted.slice(0, 6);
+  }, [progress, allBadges]);
+  const history = useMemo(() => weeklyTotals(runs, todayISO()), [runs]);
+  const maxWeek = Math.max(10, ...history.map((w) => w.km));
   if (!profile) return null;
   const totalKm = runs.reduce((s, r) => s + r.distanceKm, 0);
   const totalSec = runs.reduce((s, r) => s + r.durationSec, 0);
@@ -45,13 +54,37 @@ export default function ProfileTab() {
           </Body>
         </Card>
       ) : null}
+      <Card testID="profile-history">
+        <Label>Weekly distance · last 8 weeks</Label>
+        <Row style={{ alignItems: 'flex-end', gap: 6, height: 96 }}>
+          {history.map((w) => (
+            <View key={w.start} style={{ flex: 1, height: '100%', justifyContent: 'flex-end', alignItems: 'center', gap: 4 }}>
+              {w.km > 0 ? <Text style={{ color: colors.textMuted, fontSize: 10 }}>{Math.round(w.km)}</Text> : null}
+              <View
+                style={{
+                  width: '100%',
+                  height: `${Math.max(3, (w.km / maxWeek) * 75)}%`,
+                  borderRadius: 4,
+                  backgroundColor: w.isCurrent ? colors.primary : w.km ? colors.primaryDim : colors.surfaceAlt,
+                }}
+              />
+            </View>
+          ))}
+        </Row>
+        <Row style={{ justifyContent: 'space-between' }}>
+          <Text style={{ color: colors.textMuted, fontSize: 11 }}>8 wks ago</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 11 }} testID="profile-history-current">
+            This week · {formatKm(history[history.length - 1].km)} km
+          </Text>
+        </Row>
+      </Card>
       {progress ? (
         <Card testID="profile-badges">
           <Label>
             Badges · {progress.badges.filter((b) => b.unlocked).length}/{progress.badges.length}
           </Label>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {progress.badges.map((b) => (
+            {badges.map((b) => (
               <View
                 key={b.id}
                 testID={`badge-${b.id}${b.unlocked ? '-unlocked' : ''}`}
@@ -74,6 +107,14 @@ export default function ProfileTab() {
               </View>
             ))}
           </View>
+          {progress.badges.length > 6 ? (
+            <Button
+              title={allBadges ? 'Show fewer' : `Show all ${progress.badges.length} badges`}
+              variant="ghost"
+              onPress={() => setAllBadges(!allBadges)}
+              testID="badges-toggle"
+            />
+          ) : null}
         </Card>
       ) : null}
       <Card>

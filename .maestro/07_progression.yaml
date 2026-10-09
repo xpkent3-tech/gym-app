@@ -66,4 +66,10 @@ tags: [engagement]
     id: badge-first-run-unlocked
 - assertVisible:
     id: badge-sub-elite-unlocked
+- assertNotVisible:
+    id: badge-century
+- tapOn:
+    id: badges-toggle
+- assertVisible:
+    id: badge-century
 - assertVisible: "80 km to go"

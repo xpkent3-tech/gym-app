@@ -63,11 +63,21 @@ export function TodayCard({ plan, runs, today }: { plan: PlanWeek[]; runs: Run[]
       </Row>
       <Body>{session.description}</Body>
       {!done ? (
-        <Button
-          title="Log this run"
-          testID="today-log"
-          onPress={() => router.push({ pathname: '/log', params: { type: session.type, distance: String(session.distanceKm) } })}
-        />
+        <Row style={{ gap: 8 }}>
+          <Button
+            title="▶  Start run"
+            testID="today-start"
+            style={{ flex: 1 }}
+            onPress={() => router.push({ pathname: '/live', params: { type: session.type, distance: String(session.distanceKm) } })}
+          />
+          <Button
+            title="Log manually"
+            variant="secondary"
+            testID="today-log"
+            style={{ flex: 1 }}
+            onPress={() => router.push({ pathname: '/log', params: { type: session.type, distance: String(session.distanceKm) } })}
+          />
+        </Row>
       ) : null}
     </Card>
   );

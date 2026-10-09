@@ -27,6 +27,7 @@ function RootStack() {
       <Stack.Protected guard={onboarded}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="log" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="live" options={{ gestureEnabled: false }} />
         <Stack.Screen name="run/[id]" />
         <Stack.Screen name="friend/[id]" />
         <Stack.Screen name="profile" />

@@ -20,6 +20,7 @@ import { useStore } from '@/lib/store';
 import { colors } from '@/lib/theme';
 import { useInvite } from '@/lib/useInvite';
 import { useProgress } from '@/lib/useProgress';
+import { nextBestAction } from '@/lib/nudges';
 
 function greeting() {
   const h = new Date().getHours();
@@ -27,12 +28,16 @@ function greeting() {
 }
 
 export default function Home() {
-  const { profile, runs, plan, friends } = useStore();
+  const { profile, runs, plan, friends, invitesSent } = useStore();
+  const today = todayISO();
   const [feed, setFeed] = useState<'you' | 'friends'>('you');
   const invite = useInvite();
   const progress = useProgress();
+  const nudge = useMemo(
+    () => (profile ? nextBestAction({ profile, runs, plan, friends, invitesSent }, today) : null),
+    [profile, runs, plan, friends, invitesSent, today],
+  );
   const router = useRouter();
-  const today = todayISO();
   const weekFrom = addDays(today, -6);
   const weekRuns = runs.filter((r) => r.date >= weekFrom);
   const weekKm = weekRuns.reduce((s, r) => s + r.distanceKm, 0);
@@ -61,6 +66,14 @@ export default function Home() {
           <Stat label="Race day" value={daysToRace >= 0 ? `${daysToRace}d` : 'Done'} />
         </Row>
       </Card>
+
+      {nudge ? (
+        <Card testID="nudge" style={{ borderColor: colors.warning + '88', backgroundColor: '#211A0E' }}>
+          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }} testID="nudge-text">
+            {nudge.emoji} {nudge.text}
+          </Text>
+        </Card>
+      ) : null}
 
       <TodayCard plan={plan} runs={runs} today={today} />
 

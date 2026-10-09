@@ -12,15 +12,15 @@ import { colors } from '@/lib/theme';
 import { RUN_TYPES, type RunType } from '@/lib/types';
 
 export default function LogRun() {
-  const params = useLocalSearchParams<{ type?: RunType; distance?: string }>();
+  const params = useLocalSearchParams<{ type?: RunType; distance?: string; duration?: string; notes?: string }>();
   const router = useRouter();
   const { addRun } = useStore();
   const [type, setType] = useState<RunType>(params.type ?? 'easy');
   const [distance, setDistance] = useState(params.distance ?? '');
-  const [duration, setDuration] = useState('');
+  const [duration, setDuration] = useState(params.duration ?? '');
   const [effort, setEffort] = useState(5);
   const [dayOffset, setDayOffset] = useState(0);
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState(params.notes ?? '');
 
   const km = parseDistance(distance);
   const sec = parseDuration(duration);
@@ -55,6 +55,15 @@ export default function LogRun() {
           <Text style={{ color: valid ? colors.primary : colors.textMuted, fontWeight: '700', fontSize: 16 }}>Save</Text>
         </Pressable>
       </Row>
+
+      {!params.duration ? (
+        <Button
+          title="⏱  Start live run"
+          variant="secondary"
+          testID="log-start-live"
+          onPress={() => router.replace({ pathname: '/live', params: { type, ...(distance ? { distance } : {}) } })}
+        />
+      ) : null}
 
       <Card>
         <Label>Run type</Label>
