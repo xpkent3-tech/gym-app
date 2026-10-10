@@ -2,18 +2,18 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { ConfirmButton } from '@/components/ConfirmButton';
-import { Body, Button, Card, H1, Label, ProgressBar, Row, Screen, Stat } from '@/components/ui';
+import { Body, Button, Card, Chip, H1, Label, ProgressBar, Row, Screen, Stat } from '@/components/ui';
 import { formatDate, todayISO } from '@/lib/dates';
 import { formatDuration, formatKm } from '@/lib/pace';
 import { personalRecords, RECORD_DISTANCES } from '@/lib/records';
 import { useStore } from '@/lib/store';
 import { useProgress } from '@/lib/useProgress';
+import { SPORTS, type SportId } from '@/lib/sports';
 import { weeklyTotals } from '@/lib/history';
 import { colors } from '@/lib/theme';
 
 export default function ProfileTab() {
-  const { profile, runs, reset } = useStore();
+  const { profile, runs, setProfile } = useStore();
   const router = useRouter();
   const prs = useMemo(() => personalRecords(runs), [runs]);
   const progress = useProgress();
@@ -30,13 +30,32 @@ export default function ProfileTab() {
 
   return (
     <Screen testID="profile-screen">
-      <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={12} testID="profile-back">
-        <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '600' }}>‹ Back</Text>
-      </Pressable>
+      <Row style={{ justifyContent: 'space-between' }}>
+        <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={12} testID="profile-back">
+          <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '600' }}>‹ Back</Text>
+        </Pressable>
+        <Pressable onPress={() => router.push('/settings')} hitSlop={12} testID="profile-settings">
+          <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '600' }}>Settings</Text>
+        </Pressable>
+      </Row>
       <H1 testID="profile-name">{profile.name}</H1>
       <Body>
         {profile.sex === 'female' ? 'Female' : 'Male'} · {profile.age} · {profile.experience} · race {formatDate(profile.raceDate)}
       </Body>
+      <Card testID="profile-sports">
+        <Label>Your sports</Label>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {SPORTS.map((sp) => {
+            const on = profile.sports?.includes(sp.id) ?? false;
+            const toggle = () => {
+              const cur: SportId[] = profile.sports ?? [];
+              const next = on ? cur.filter((x) => x !== sp.id) : [...cur, sp.id];
+              if (next.length) setProfile({ ...profile, sports: next });
+            };
+            return <Chip key={sp.id} label={`${sp.emoji} ${sp.label}`} color={sp.color} selected={on} onPress={toggle} testID={`profile-sport-${sp.id}`} />;
+          })}
+        </View>
+      </Card>
       {progress ? (
         <Card testID="profile-level">
           <Row style={{ justifyContent: 'space-between' }}>
@@ -145,16 +164,6 @@ export default function ProfileTab() {
           );
         })}
       </Card>
-      <ConfirmButton
-        title="Reset all data"
-        confirmTitle="Erase everything"
-        message="This permanently deletes your profile, plan and every run on this device."
-        testID="profile-reset"
-        onConfirm={() => {
-          reset();
-          router.replace('/onboarding');
-        }}
-      />
     </Screen>
   );
 }

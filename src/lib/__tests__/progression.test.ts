@@ -97,3 +97,17 @@ describe('strength XP', () => {
     expect(totalXp({ ...base, strength: [s] }, today) - totalXp(base, today)).toBe(75);
   });
 });
+
+describe('hybrid streak', () => {
+  it('counts runs, strength and sport sessions towards the weekly streak', () => {
+    const mixed: ProgressInput = {
+      ...base,
+      runs: [run({ date: '2026-09-29', distanceKm: 5, durationSec: 1500 })],
+      strength: [{ id: 's', date: '2026-09-30', createdAt: 1, exercises: [] }],
+      sessions: [{ id: 'f', date: '2026-10-02', createdAt: 1, sport: 'football', workoutId: 'fb-match', durationMin: 90, rpe: 8, notes: '' }],
+    };
+    expect(weeklyStreak([...mixed.runs, ...mixed.strength!, ...mixed.sessions!], today)).toBe(1);
+    expect(progressOf(mixed, today).streak).toBe(1);
+    expect(totalXp(mixed, today) - totalXp({ ...mixed, sessions: [] }, today)).toBe(75);
+  });
+});

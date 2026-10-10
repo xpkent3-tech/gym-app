@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type
 
 import { runnerById, userFriendCode } from './community';
 import type { StrengthSession } from './muscles';
+import type { SportSession } from './sports';
 import { generatePlan, type PlanWeek } from './plan';
 import type { Profile, Run } from './types';
 
@@ -19,6 +20,7 @@ export interface AppData {
   pendingInvite: string | null;
   invitesSent: number;
   strength: StrengthSession[];
+  sessions: SportSession[];
 }
 
 type Action =
@@ -33,20 +35,24 @@ type Action =
   | { type: 'inviteSent' }
   | { type: 'addStrength'; session: StrengthSession }
   | { type: 'deleteStrength'; id: string }
+  | { type: 'addSession'; session: SportSession }
+  | { type: 'deleteSession'; id: string }
   | { type: 'reset' };
 
 interface State extends AppData {
   hydrated: boolean;
 }
 
-export const EMPTY: AppData = { profile: null, runs: [], friends: [], kudos: [], pendingInvite: null, invitesSent: 0, strength: [] };
+export const EMPTY: AppData = { profile: null, runs: [], friends: [], kudos: [], pendingInvite: null, invitesSent: 0, strength: [], sessions: [] };
 
 function sortRuns(runs: Run[]): Run[] {
   return [...runs].sort((a, b) => (a.date === b.date ? b.createdAt - a.createdAt : a.date < b.date ? 1 : -1));
 }
 
 function withFriendCode(p: Profile): Profile {
-  return p.friendCode ? p : { ...p, friendCode: userFriendCode(p.name, p.createdAt) };
+  const withCode = p.friendCode ? p : { ...p, friendCode: userFriendCode(p.name, p.createdAt) };
+  // Profiles from before hybrid sports trained running and strength.
+  return withCode.sports?.length ? withCode : { ...withCode, sports: ['running', 'strength'] };
 }
 
 const addUnique = (list: string[], id: string) => (list.includes(id) ? list : [...list, id]);
@@ -60,6 +66,7 @@ export function migrate(raw: Partial<AppData>): AppData {
     runs: sortRuns(data.runs ?? []),
     friends: (data.friends ?? []).filter((id) => !!runnerById(id)),
     strength: data.strength ?? [],
+    sessions: data.sessions ?? [],
   };
 }
 
@@ -92,6 +99,10 @@ export function reducer(state: State, action: Action): State {
       return { ...state, strength: [action.session, ...state.strength] };
     case 'deleteStrength':
       return { ...state, strength: state.strength.filter((s) => s.id !== action.id) };
+    case 'addSession':
+      return { ...state, sessions: [action.session, ...state.sessions] };
+    case 'deleteSession':
+      return { ...state, sessions: state.sessions.filter((s) => s.id !== action.id) };
     case 'inviteSent':
       return { ...state, invitesSent: state.invitesSent + 1 };
     case 'reset':
@@ -111,6 +122,8 @@ interface Store extends State {
   inviteSent: () => void;
   addStrength: (s: StrengthSession) => void;
   deleteStrength: (id: string) => void;
+  addSession: (s: SportSession) => void;
+  deleteSession: (id: string) => void;
   reset: () => void;
 }
 
@@ -149,6 +162,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       inviteSent: () => dispatch({ type: 'inviteSent' }),
       addStrength: (session: StrengthSession) => dispatch({ type: 'addStrength', session }),
       deleteStrength: (id: string) => dispatch({ type: 'deleteStrength', id }),
+      addSession: (session: SportSession) => dispatch({ type: 'addSession', session }),
+      deleteSession: (id: string) => dispatch({ type: 'deleteSession', id }),
       reset: () => dispatch({ type: 'reset' }),
     }),
     [],

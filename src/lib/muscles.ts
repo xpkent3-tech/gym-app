@@ -1,5 +1,6 @@
 import { addDays } from './dates';
 import { exerciseById, EXERCISES, type Exercise } from './exercises';
+import { sessionMuscleLoad, workoutById, type SportSession } from './sports';
 import type { Run, RunType } from './types';
 
 export type MuscleId =
@@ -115,7 +116,7 @@ export function mergeLoads(loads: MuscleLoad[]): MuscleLoad {
 }
 
 export interface Contributor {
-  kind: 'run' | 'strength';
+  kind: 'run' | 'strength' | 'sport';
   id: string;
   date: string;
   label: string;
@@ -128,7 +129,7 @@ export interface WeeklyMuscles {
   contributors: Partial<Record<MuscleId, Contributor[]>>;
 }
 
-export function weeklyMuscles(runs: Run[], strength: StrengthSession[], today: string, days = 7): WeeklyMuscles {
+export function weeklyMuscles(runs: Run[], strength: StrengthSession[], today: string, days = 7, sessions: SportSession[] = []): WeeklyMuscles {
   const from = addDays(today, -(days - 1));
   const inWindow = <T extends { date: string }>(x: T) => x.date >= from && x.date <= today;
   const contributors: WeeklyMuscles['contributors'] = {};
@@ -146,8 +147,13 @@ export function weeklyMuscles(runs: Run[], strength: StrengthSession[], today: s
     add(l, { kind: 'strength', id: s.id, date: s.date, label: names.length > 2 ? `${names.slice(0, 2).join(', ')} +${names.length - 2}` : names.join(', ') });
     return l;
   });
+  const sportLoads = sessions.filter(inWindow).map((s) => {
+    const l = sessionMuscleLoad(s);
+    add(l, { kind: 'sport', id: s.id, date: s.date, label: workoutById(s.workoutId)?.name ?? s.sport });
+    return l;
+  });
   for (const list of Object.values(contributors)) list?.sort((a, b) => b.load - a.load);
-  return { load: mergeLoads([...runLoads, ...strengthLoads]), strengthLoad: mergeLoads(strengthLoads), contributors };
+  return { load: mergeLoads([...runLoads, ...strengthLoads, ...sportLoads]), strengthLoad: mergeLoads(strengthLoads), contributors };
 }
 
 /** 0..1 relative to the most-loaded muscle. */

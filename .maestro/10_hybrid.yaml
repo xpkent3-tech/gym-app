@@ -1,0 +1,155 @@
+url: ${APP_URL || 'http://localhost:8081'}
+name: Hybrid athlete - HYROX, CrossFit and football each with their own workouts
+tags: [core, hybrid]
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: onboarding-sports
+    timeout: 15000
+- tapOn:
+    id: sport-hyrox
+- tapOn:
+    id: sport-crossfit
+- tapOn:
+    id: sport-football
+- tapOn:
+    id: sport-running
+- assertVisible:
+    id: onboarding-hybrid
+# Running-only questions are hidden for non-runners
+- assertNotVisible:
+    id: onboarding-weekly
+- assertNotVisible:
+    id: race-16
+- tapOn:
+    id: onboarding-name
+- inputText: Kent
+- tapOn:
+    id: onboarding-submit
+- extendedWaitUntil:
+    visible:
+      id: home-screen
+    timeout: 10000
+- assertNotVisible:
+    id: today-card
+# CrossFit: Fran, for time
+- tapOn:
+    id: tab-log
+- assertVisible:
+    id: log-hub
+- tapOn:
+    id: hub-crossfit
+- assertVisible:
+    id: sport-title
+    text: ".*CrossFit workouts"
+- tapOn:
+    id: workout-0
+- assertVisible:
+    id: sport-log-title
+    text: "Fran"
+- assertVisible:
+    id: sport-hint
+    text: "Enter your finish time.*"
+- tapOn:
+    id: sport-time
+- inputText: "4:45"
+- tapOn:
+    id: sport-rpe-9
+- tapOn:
+    id: sport-log-save
+- assertVisible:
+    id: session-saved
+- assertVisible:
+    id: session-title
+    text: "Fran . 4:45"
+- assertVisible:
+    id: session-rank-pct
+    text: "Top \\d+%"
+- tapOn:
+    id: session-done
+- assertVisible:
+    id: sport-card-title-0
+    text: "Fran . 4:45"
+# Football: match with goals
+- tapOn:
+    id: tab-log
+- tapOn:
+    id: hub-football
+- tapOn:
+    id: workout-0
+- assertVisible:
+    id: sport-log-title
+    text: "Match"
+- tapOn:
+    id: sport-goals
+- inputText: "1"
+- tapOn:
+    id: sport-log-save
+- assertVisible:
+    id: session-goals
+    text: "1 .*"
+- tapOn:
+    id: session-done
+# HYROX race with station splits
+- tapOn:
+    id: tab-log
+- tapOn:
+    id: hub-hyrox
+- tapOn:
+    id: workout-0
+- tapOn:
+    id: sport-time
+- inputText: "1:22:40"
+- tapOn:
+    id: sport-splits-toggle
+- tapOn:
+    id: split-ski
+- inputText: "4:35"
+# Long form: save from the header
+- tapOn:
+    id: sport-log-save-top
+- assertVisible:
+    id: session-rank-pct
+    text: "Top 27%"
+- assertVisible:
+    id: session-splits
+- tapOn:
+    id: session-done
+# Sport ranks + hybrid rank
+- tapOn:
+    id: tab-rank
+- assertVisible:
+    id: hybrid-rank
+- assertVisible:
+    id: sport-rank-hyrox
+    text: "Top 27%"
+- assertVisible:
+    id: sport-rank-fran
+- assertVisible:
+    id: sport-rank-football
+- assertNotVisible:
+    id: rank-empty
+# Plan: one section per sport, no marathon plan
+- tapOn:
+    id: tab-plan
+- assertVisible:
+    id: plan-sport-hyrox
+- assertVisible:
+    id: plan-sport-crossfit
+- assertVisible:
+    id: plan-sport-football
+- assertNotVisible:
+    id: plan-summary
+# Muscles from all three sports
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: home-week-sessions
+    text: "3"
+- tapOn:
+    id: home-muscles
+- assertVisible:
+    id: muscle-row-quads
+- takeScreenshot: .maestro/output/hybrid-body

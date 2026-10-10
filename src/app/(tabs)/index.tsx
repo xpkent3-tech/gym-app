@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/Avatar';
 import { BodyPair } from '@/components/BodyMap';
+import { SportSessionCard } from '@/components/SportSessionCard';
 import { StrengthCard } from '@/components/StrengthCard';
 import { intensities } from '@/lib/muscles';
 import { useWeeklyMuscles } from '@/lib/useMuscles';
@@ -34,16 +35,17 @@ function greeting() {
 
 export default function Home() {
   const sex = useBodySex();
-  const { profile, runs, plan, friends, invitesSent, strength } = useStore();
+  const { profile, runs, plan, friends, invitesSent, strength, sessions } = useStore();
   const muscles = useWeeklyMuscles();
+  const runner = profile?.sports?.includes('running') ?? true;
   const heat = useMemo(() => intensities(muscles.load), [muscles]);
   const today = todayISO();
   const [feed, setFeed] = useState<'you' | 'friends'>('you');
   const invite = useInvite();
   const progress = useProgress();
   const nudge = useMemo(
-    () => (profile ? nextBestAction({ profile, runs, plan, friends, invitesSent }, today) : null),
-    [profile, runs, plan, friends, invitesSent, today],
+    () => (profile ? nextBestAction({ profile, runs, plan, friends, invitesSent, strength, sessions }, today) : null),
+    [profile, runs, plan, friends, invitesSent, strength, sessions, today],
   );
   const router = useRouter();
   const weekFrom = addDays(today, -6);
@@ -51,6 +53,10 @@ export default function Home() {
   const weekKm = weekRuns.reduce((s, r) => s + r.distanceKm, 0);
   const rank = useMemo(() => (profile ? rankRunner(profile, runs) : null), [profile, runs]);
   const daysToRace = profile ? diffDays(today, profile.raceDate) : 0;
+  const weekSessionsList = sessions.filter((x) => x.date >= weekFrom);
+  const weekLoad = weekSessionsList.reduce((s, x) => s + x.durationMin * x.rpe, 0);
+  const weekSessions = weekRuns.length + strength.filter((x) => x.date >= weekFrom).length + weekSessionsList.length;
+  const weekMinutes = Math.round(weekRuns.reduce((s, r) => s + r.durationSec / 60, 0) + weekSessionsList.reduce((s, x) => s + x.durationMin, 0));
   const friendRuns = useMemo(() => (feed === 'friends' ? friendsFeed(friends, today).slice(0, 20) : []), [feed, friends, today]);
 
   if (!profile) return null;
@@ -59,7 +65,9 @@ export default function Home() {
       <Row style={{ justifyContent: 'space-between' }}>
         <View style={{ gap: 2 }}>
           <Body>{greeting()},</Body>
-          <H1 testID="home-greeting">{profile.name} 👟</H1>
+          <H1 testID="home-greeting">
+            {profile.name} {(profile.sports?.length ?? 1) > 1 ? '💪' : '👟'}
+          </H1>
           {progress ? <LevelChip level={progress.level.level} streak={progress.streak} /> : null}
         </View>
         <Pressable onPress={() => router.push('/profile')} testID="home-profile" hitSlop={8}>
@@ -69,9 +77,13 @@ export default function Home() {
 
       <Card>
         <Row>
-          <Stat label="Last 7 days" value={`${formatKm(weekKm)} km`} testID="home-week-km" />
-          <Stat label="Runs" value={String(weekRuns.length)} />
-          <Stat label="Race day" value={daysToRace >= 0 ? `${daysToRace}d` : 'Done'} />
+          {runner ? (
+            <Stat label="Last 7 days" value={`${formatKm(weekKm)} km`} testID="home-week-km" />
+          ) : (
+            <Stat label="Load (7d)" value={`${weekLoad} AU`} testID="home-week-load" />
+          )}
+          <Stat label="Sessions" value={String(weekSessions)} testID="home-week-sessions" />
+          {runner ? <Stat label="Race day" value={daysToRace >= 0 ? `${daysToRace}d` : 'Done'} /> : <Stat label="Minutes" value={String(weekMinutes)} />}
         </Row>
       </Card>
 
@@ -83,9 +95,9 @@ export default function Home() {
         </Card>
       ) : null}
 
-      <TodayCard plan={plan} runs={runs} today={today} />
+      {runner ? <TodayCard plan={plan} runs={runs} today={today} /> : null}
 
-      {progress ? <ChallengeCard challenge={progress.challenge} /> : null}
+      {progress && runner ? <ChallengeCard challenge={progress.challenge} /> : null}
 
       <Card onPress={() => router.push('/body')} testID="home-muscles">
         <Row style={{ justifyContent: 'space-between' }}>
@@ -125,20 +137,23 @@ export default function Home() {
         ) : (
           friendRuns.map((r, i) => <FriendRunCard key={r.id} run={r} runner={runnerById(r.runnerId)!} index={i} />)
         )
-      ) : runs.length === 0 && strength.length === 0 ? (
+      ) : runs.length === 0 && strength.length === 0 && sessions.length === 0 ? (
         <Card testID="history-empty">
-          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>No runs yet</Text>
-          <Body>Log your first run to unlock your rank and start your streak.</Body>
-          <Button title="Log your first run" onPress={() => router.push('/log')} testID="empty-log" />
+          <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>No workouts yet</Text>
+          <Body>Log your first session to unlock your rank and start your streak.</Body>
+          <Button title="Log your first workout" onPress={() => router.push('/log')} testID="empty-log" />
         </Card>
       ) : (
         [
           ...runs.map((r) => ({ kind: 'run' as const, date: r.date, at: r.createdAt, run: r })),
           ...strength.map((x) => ({ kind: 'strength' as const, date: x.date, at: x.createdAt, session: x })),
+          ...sessions.map((x) => ({ kind: 'sport' as const, date: x.date, at: x.createdAt, sport: x })),
         ]
           .sort((a, b) => (a.date === b.date ? b.at - a.at : a.date < b.date ? 1 : -1))
           .map((item, i) =>
-            item.kind === 'run' ? (
+            item.kind === 'sport' ? (
+              <SportSessionCard key={item.sport.id} session={item.sport} index={i} />
+            ) : item.kind === 'run' ? (
               <RunCard key={item.run.id} run={item.run} index={runs.indexOf(item.run)} prs={prsSetBy(item.run, runs)} />
             ) : (
               <StrengthCard key={item.session.id} session={item.session} index={i} />

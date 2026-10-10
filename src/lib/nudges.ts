@@ -1,6 +1,6 @@
 import { diffDays, startOfWeek, addDays } from './dates';
 import { formatKm } from './pace';
-import { STREAK_MIN_RUNS, XP, progressOf, type ProgressInput } from './progression';
+import { activityDates, STREAK_MIN_RUNS, XP, progressOf, type ProgressInput } from './progression';
 
 export type NudgeKind = 'streak' | 'challenge' | 'level';
 
@@ -14,7 +14,7 @@ export interface Nudge {
 export function nextBestAction(input: ProgressInput, today: string): Nudge | null {
   const p = progressOf(input, today);
   const weekStart = startOfWeek(today);
-  const runsThisWeek = input.runs.filter((r) => r.date >= weekStart && r.date <= today).length;
+  const runsThisWeek = activityDates(input).filter((r) => r.date >= weekStart && r.date <= today).length;
   const daysLeft = diffDays(today, addDays(weekStart, 6)) + 1;
   const needed = STREAK_MIN_RUNS - runsThisWeek;
 
@@ -22,7 +22,7 @@ export function nextBestAction(input: ProgressInput, today: string): Nudge | nul
     return {
       kind: 'streak',
       emoji: '🔥',
-      text: `Run ${needed} more time${needed === 1 ? '' : 's'} by Sunday to keep your ${p.streak}-week streak`,
+      text: `Train ${needed} more time${needed === 1 ? '' : 's'} by Sunday to keep your ${p.streak}-week streak`,
     };
   }
   const c = p.challenge;

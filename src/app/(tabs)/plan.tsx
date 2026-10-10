@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { TodayCard } from '@/components/TodayCard';
-import { Body, Card, Chip, H1, Label, Pill, ProgressBar, Row, Screen } from '@/components/ui';
-import { addDays, formatDate, todayISO, weekdayShort } from '@/lib/dates';
+import { Body, Button, Card, Chip, H1, Label, Pill, ProgressBar, Row, Screen } from '@/components/ui';
+import { addDays, diffDays, formatDate, startOfWeek, todayISO, weekdayShort } from '@/lib/dates';
 import { currentWeekIndex, isSessionDone, weekProgress, weekVolume, type PlanWeek } from '@/lib/plan';
+import { SESSION_SPORTS, sportMeta, weeklySuggestions, type SessionSport } from '@/lib/sports';
 import { useStore } from '@/lib/store';
 import { colors } from '@/lib/theme';
 import { runTypeMeta, type Run } from '@/lib/types';
@@ -62,7 +63,7 @@ function WeekCard({ week, runs, today }: { week: PlanWeek; runs: Run[]; today: s
   );
 }
 
-export default function Plan() {
+function MarathonPlan() {
   const { plan, runs, profile } = useStore();
   const today = todayISO();
   const current = currentWeekIndex(plan, today);
@@ -75,8 +76,8 @@ export default function Plan() {
   const maxKm = Math.max(...plan.map(weekVolume));
 
   return (
-    <Screen testID="plan-screen">
-      <H1>Marathon Plan</H1>
+    <>
+      <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>🏃 Marathon plan</Text>
       <Body testID="plan-summary">
         {plan.length} weeks · race day {formatDate(profile.raceDate, today)} · {totalDone}/{total} sessions done
       </Body>
@@ -123,6 +124,65 @@ export default function Plan() {
       </Row>
 
       <WeekCard week={week} runs={runs} today={today} />
+    </>
+  );
+}
+
+function SportWeek({ sport, weekIndex }: { sport: SessionSport; weekIndex: number }) {
+  const router = useRouter();
+  const meta = sportMeta(sport);
+  return (
+    <Card testID={`plan-sport-${sport}`} style={{ borderLeftWidth: 3, borderLeftColor: meta.color }}>
+      <Row style={{ justifyContent: 'space-between' }}>
+        <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>
+          {meta.emoji} {meta.label} · this week
+        </Text>
+        <Pressable onPress={() => router.push({ pathname: '/sport/[sport]', params: { sport } })} hitSlop={8} testID={`plan-sport-${sport}-all`}>
+          <Text style={{ color: colors.primary, fontWeight: '700' }}>All ›</Text>
+        </Pressable>
+      </Row>
+      {weeklySuggestions(sport, weekIndex).map((w) => (
+        <Row key={w.id} style={{ gap: 10, paddingVertical: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.text, fontWeight: '700' }}>{w.name}</Text>
+            <Text style={{ color: colors.textDim, fontSize: 13 }} numberOfLines={2}>
+              {w.description}
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => router.push({ pathname: '/sport/log', params: { workout: w.id } })}
+            testID={`plan-log-${w.id}`}
+            style={{ backgroundColor: meta.color, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 }}
+          >
+            <Text style={{ color: '#111', fontWeight: '800' }}>Log</Text>
+          </Pressable>
+        </Row>
+      ))}
+    </Card>
+  );
+}
+
+export default function Plan() {
+  const { profile } = useStore();
+  const router = useRouter();
+  if (!profile) return null;
+  const sports = profile.sports ?? ['running'];
+  const weekIndex = Math.floor(diffDays('2026-01-05', startOfWeek(todayISO())) / 7);
+  return (
+    <Screen testID="plan-screen">
+      <H1>Training Plan</H1>
+      <Body>{sports.length > 1 ? 'Your hybrid week — one plan per sport.' : 'Your week, built around your goal.'}</Body>
+      {sports.includes('running') ? <MarathonPlan /> : null}
+      {SESSION_SPORTS.filter((s) => sports.includes(s)).map((s) => (
+        <SportWeek key={s} sport={s} weekIndex={weekIndex} />
+      ))}
+      {sports.includes('strength') ? (
+        <Card testID="plan-sport-strength" style={{ borderLeftWidth: 3, borderLeftColor: sportMeta('strength').color }}>
+          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>🏋️ Strength · this week</Text>
+          <Body>Two 40-minute sessions. Start from what your muscle map says you’ve neglected.</Body>
+          <Button title="Start strength workout" variant="secondary" onPress={() => router.push('/body')} testID="plan-strength" />
+        </Card>
+      ) : null}
     </Screen>
   );
 }

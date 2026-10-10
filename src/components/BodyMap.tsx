@@ -101,7 +101,6 @@ function shade(hex: string, amt: number): string {
 
 const GRADIENT_COLORS = [BASE, SKIN_FILL, SECONDARY, colors.primary, ...HEAT];
 
-
 export type BodyMapProps = {
   view: BodyView;
   sex?: Sex;

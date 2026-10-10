@@ -53,7 +53,7 @@ describe('next best action', () => {
 
   it('warns when the streak is at risk', () => {
     const runs = ['2026-09-21', '2026-09-23', '2026-09-25', '2026-09-28', '2026-09-30', '2026-10-02', '2026-10-06'].map(five);
-    expect(nextBestAction({ ...base, runs }, '2026-10-09')?.text).toBe('Run 2 more times by Sunday to keep your 2-week streak');
+    expect(nextBestAction({ ...base, runs }, '2026-10-09')?.text).toBe('Train 2 more times by Sunday to keep your 2-week streak');
   });
 
   it("doesn't nag when the streak can no longer be saved", () => {

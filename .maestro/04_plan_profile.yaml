@@ -40,14 +40,16 @@ tags: [core]
     text: "STR-.*"
 # Reset requires confirmation and returns to onboarding
 - tapOn:
-    id: profile-reset
+    id: profile-settings
 - tapOn:
-    id: profile-reset-cancel
+    id: settings-reset
+- tapOn:
+    id: settings-reset-cancel
 - assertVisible:
-    id: profile-screen
+    id: settings-screen
 - tapOn:
-    id: profile-reset
+    id: settings-reset
 - tapOn:
-    id: profile-reset-confirm
+    id: settings-reset-confirm
 - assertVisible:
     id: onboarding-screen

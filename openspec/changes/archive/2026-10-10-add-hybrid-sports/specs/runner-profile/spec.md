@@ -1,9 +1,6 @@
-# runner-profile Specification
+# Spec Delta
 
-## Purpose
-Captures who the runner is (demographics, experience, goal race) so plans and rankings are personalised.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: First-run onboarding
 The system SHALL show onboarding on first launch and SHALL NOT show the main tabs until onboarding is completed. Onboarding SHALL ask which sports the athlete does (at least one), and SHALL only ask running-specific questions (race date, recent race) when Running is selected.
@@ -19,13 +16,6 @@ The system SHALL show onboarding on first launch and SHALL NOT show the main tab
 #### Scenario: Non-runner
 - **WHEN** the user selects only HYROX
 - **THEN** the race-date and recent-race questions are hidden
-
-### Requirement: Profile persistence
-The system SHALL persist the profile and all runs on-device so they survive app restarts.
-
-#### Scenario: Relaunch
-- **WHEN** a user who completed onboarding relaunches the app
-- **THEN** the Home tab is shown without onboarding
 
 ### Requirement: Reset data
 The system SHALL let the user erase all local data from Settings (reached from Profile) after confirming.

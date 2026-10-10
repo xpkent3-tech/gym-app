@@ -91,7 +91,9 @@ export default function BodyScreen() {
           <Pressable key={m.id} onPress={() => setSelected(m.id)} testID={`muscle-row-${m.id}`}>
             <Row style={{ gap: 10, paddingVertical: 6 }}>
               <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: heatColor(heat[m.id]) }} />
-              <Text style={{ color: selected === m.id ? colors.primary : colors.text, fontWeight: '700', width: 100 }}>{m.deep ? `${m.label} (deep)` : m.label}</Text>
+              <Text style={{ color: selected === m.id ? colors.primary : colors.text, fontWeight: '700', width: 100 }}>
+                {m.deep ? `${m.label} (deep)` : m.label}
+              </Text>
               <View style={{ flex: 1, height: 6, backgroundColor: colors.surfaceAlt, borderRadius: 3 }}>
                 <View style={{ width: `${(heat[m.id] ?? 0) * 100}%`, height: 6, backgroundColor: heatColor(heat[m.id]), borderRadius: 3 }} />
               </View>

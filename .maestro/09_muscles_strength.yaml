@@ -44,7 +44,7 @@ tags: [core, muscles]
 - tapOn:
     id: tab-log
 - tapOn:
-    id: log-strength
+    id: hub-strength
 - assertVisible:
     id: picker
 - tapOn:

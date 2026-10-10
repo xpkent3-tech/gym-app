@@ -1,3 +1,5 @@
+import type { SportId } from './sports';
+
 export type Sex = 'male' | 'female';
 export type Experience = 'beginner' | 'intermediate' | 'advanced';
 export type RunType = 'easy' | 'long' | 'tempo' | 'intervals' | 'recovery' | 'race';
@@ -33,6 +35,8 @@ export interface Profile {
   createdAt: number;
   /** Shareable code others use to add you, e.g. STR-4F2A9Q. */
   friendCode?: string;
+  /** Disciplines this athlete trains. */
+  sports?: SportId[];
 }
 
 export const RUN_TYPES: { type: RunType; label: string; color: string }[] = [

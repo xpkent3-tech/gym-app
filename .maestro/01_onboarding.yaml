@@ -5,7 +5,7 @@ tags: [core]
 - launchApp:
     clearState: true
 - extendedWaitUntil:
-    visible: "Train for your marathon.*"
+    visible: "Train for anything.*"
     timeout: 15000
 # Name is required: submitting without one keeps you on onboarding
 - tapOn:

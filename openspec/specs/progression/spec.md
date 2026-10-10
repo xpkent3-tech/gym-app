@@ -20,11 +20,15 @@ The system SHALL compute a level from total XP, where reaching level L requires 
 - **THEN** they are level 3 with 0 of 300 XP towards level 4
 
 ### Requirement: Weekly streak
-The system SHALL count consecutive Monday-based weeks with at least 3 runs, ending with the current week if it already qualifies, otherwise with the previous week; rest days SHALL NOT break a streak.
+The system SHALL count consecutive Monday-based weeks with at least 3 training sessions of any sport (runs, strength sessions and sport sessions), ending with the current week if it already qualifies, otherwise with the previous week; rest days SHALL NOT break a streak.
 
 #### Scenario: Current week in progress
-- **WHEN** the last two complete weeks each had 3 runs and the current week has 1 run so far
+- **WHEN** the last two complete weeks each had 3 sessions and the current week has 1 so far
 - **THEN** the streak is 2 weeks
+
+#### Scenario: Mixed sports count
+- **WHEN** a week has one run, one CrossFit WOD and one football match
+- **THEN** that week counts towards the streak
 
 ### Requirement: Weekly challenge
 The system SHALL set a weekly distance challenge equal to the current plan week's target (or the profile's weekly km before the plan starts), at least 10 km, and SHALL show progress and mark it complete when the week's distance reaches it.

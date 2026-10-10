@@ -4,6 +4,8 @@ import { Text, View } from 'react-native';
 
 import { Avatar } from '@/components/Avatar';
 import { Segmented } from '@/components/Segmented';
+import { SportRankCards } from '@/components/SportRanks';
+import { sportRanks } from '@/lib/sportRank';
 
 import { Body, Button, Card, Chip, H1, Label, ProgressBar, Row, Screen, Stat } from '@/components/ui';
 import { runnerActivity, runnerById, type Runner } from '@/lib/community';
@@ -16,7 +18,7 @@ import { colors } from '@/lib/theme';
 import { useInvite } from '@/lib/useInvite';
 
 export default function Rank() {
-  const { profile, runs, friends } = useStore();
+  const { profile, runs, friends, sessions } = useStore();
   const router = useRouter();
   const invite = useInvite();
   const [view, setView] = useState<'everyone' | 'friends'>('everyone');
@@ -27,6 +29,9 @@ export default function Rank() {
   if (!profile) return null;
   const group = `${profile.sex === 'female' ? 'women' : 'men'} ${rank?.ageGroup ?? ''}`.trim();
   const today = todayISO();
+  const sports = profile.sports ?? ['running'];
+  const runner = sports.includes('running') || runs.length > 0;
+  const ranks = sportRanks(sessions, profile.sex, profile.age, today);
   const board = buildBoard(
     [
       { id: 'you', name: profile.name, isYou: true, weekKm, marathonSec: rank?.prediction.timeSec ?? null },
@@ -122,7 +127,9 @@ export default function Rank() {
             </Card>
           )}
         </>
-      ) : !rank ? (
+      ) : null}
+      {view === 'everyone' ? <SportRankCards ranks={ranks} runningPct={rank?.topPct ?? null} sports={sports} /> : null}
+      {view === 'friends' ? null : !runner ? null : !rank ? (
         <Card testID="rank-empty">
           <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>Unranked</Text>
           <Body>Log a run of 3 km or more (or add a recent race in onboarding) and we’ll predict your marathon and rank you against other marathoners.</Body>
@@ -183,7 +190,7 @@ export default function Rank() {
         </>
       )}
 
-      {view === 'everyone' ? (
+      {view === 'everyone' && runner ? (
         <Card testID="rank-volume">
           <Label>Training volume · last 7 days</Label>
           {volPct === null ? (
@@ -200,7 +207,8 @@ export default function Rank() {
         </Card>
       ) : null}
       <Body style={{ fontSize: 12, color: colors.textMuted }}>
-        Rankings compare your Riegel-predicted marathon to a model of marathon finish times by sex and age. They’re estimates, not official results.
+        Ranks compare your results with models of each sport’s population by sex (and age for running and HYROX): Riegel-predicted marathon, HYROX Open finish
+        times, CrossFit benchmark results and football session load. They’re estimates, not official results.
       </Body>
     </Screen>
   );

@@ -22,14 +22,14 @@ export default function RunDetail() {
   const sex = useBodySex();
   const { id, fresh } = useLocalSearchParams<{ id: string; fresh?: string }>();
   const router = useRouter();
-  const { runs, profile, deleteRun, plan, friends, invitesSent } = useStore();
+  const { runs, profile, deleteRun, plan, friends, invitesSent, strength, sessions } = useStore();
   const run = runs.find((r) => r.id === id);
   const prs = useMemo(() => (run ? prsSetBy(run, runs) : []), [run, runs]);
   const rank = useMemo(() => (profile ? rankRunner(profile, runs) : null), [profile, runs]);
   const invite = useInvite();
   const celebration = useMemo(
-    () => (run && profile && fresh === '1' ? celebrationFor({ profile, runs, plan, friends, invitesSent }, run.id, todayISO()) : null),
-    [run, profile, runs, plan, friends, invitesSent, fresh],
+    () => (run && profile && fresh === '1' ? celebrationFor({ profile, runs, plan, friends, invitesSent, strength, sessions }, run.id, todayISO()) : null),
+    [run, profile, runs, plan, friends, invitesSent, strength, sessions, fresh],
   );
   const done = () => (router.canGoBack() ? router.back() : router.replace('/'));
 

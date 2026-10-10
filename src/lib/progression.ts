@@ -3,9 +3,10 @@ import type { PlanWeek } from './plan';
 import { rankRunner, TIERS } from './rank';
 import { prsSetBy } from './records';
 import type { StrengthSession } from './muscles';
+import type { SportSession } from './sports';
 import type { Profile, Run } from './types';
 
-export const XP = { perKm: 10, session: 50, pr: 100, challenge: 150, friend: 25, invite: 50, strength: 75 };
+export const XP = { perKm: 10, session: 50, pr: 100, challenge: 150, friend: 25, invite: 50, strength: 75, sport: 75 };
 export const STREAK_MIN_RUNS = 3;
 
 export interface ProgressInput {
@@ -15,6 +16,12 @@ export interface ProgressInput {
   friends: string[];
   invitesSent: number;
   strength?: StrengthSession[];
+  sessions?: SportSession[];
+}
+
+/** Every training session of any sport (runs, strength, sport sessions). */
+export function activityDates(input: Pick<ProgressInput, 'runs' | 'strength' | 'sessions'>): { date: string }[] {
+  return [...input.runs, ...(input.strength ?? []), ...(input.sessions ?? [])];
 }
 
 /** XP needed to reach `level` (level 1 = 0 XP). */
@@ -62,7 +69,7 @@ export function challengesCompleted(input: ProgressInput, today: string): number
   return count;
 }
 
-export function weeklyStreak(runs: Run[], today: string): number {
+export function weeklyStreak(runs: { date: string }[], today: string): number {
   const runsIn = (w: string) => runs.filter((r) => r.date >= w && r.date < addDays(w, 7)).length;
   let w = startOfWeek(today);
   if (runsIn(w) < STREAK_MIN_RUNS) w = addDays(w, -7);
@@ -89,7 +96,8 @@ export function totalXp(input: ProgressInput, today: string): number {
       challengesCompleted(input, today) * XP.challenge +
       input.friends.length * XP.friend +
       input.invitesSent * XP.invite +
-      (input.strength?.length ?? 0) * XP.strength,
+      (input.strength?.length ?? 0) * XP.strength +
+      (input.sessions?.length ?? 0) * XP.sport,
   );
 }
 
@@ -133,7 +141,7 @@ export function badgesFor(input: ProgressInput, today: string): Badge[] {
   const c: BadgeContext = {
     maxRunKm: Math.max(0, ...input.runs.map((r) => r.distanceKm)),
     totalKm: input.runs.reduce((s, r) => s + r.distanceKm, 0),
-    streak: weeklyStreak(input.runs, today),
+    streak: weeklyStreak(activityDates(input), today),
     topPct: rankRunner(input.profile, input.runs)?.topPct ?? null,
     friends: input.friends.length,
     invites: input.invitesSent,
@@ -152,7 +160,13 @@ export interface Progress {
 
 export function progressOf(input: ProgressInput, today: string): Progress {
   const xp = totalXp(input, today);
-  return { xp, level: levelFor(xp), streak: weeklyStreak(input.runs, today), challenge: weeklyChallenge(input, today), badges: badgesFor(input, today) };
+  return {
+    xp,
+    level: levelFor(xp),
+    streak: weeklyStreak(activityDates(input), today),
+    challenge: weeklyChallenge(input, today),
+    badges: badgesFor(input, today),
+  };
 }
 
 export interface Celebration {

@@ -7,6 +7,7 @@ import { Body, Button, Card, Chip, Label, Row, Screen } from '@/components/ui';
 import { addDays, todayISO } from '@/lib/dates';
 import { uid } from '@/lib/id';
 import { formatPace, parseDistance, parseDuration } from '@/lib/pace';
+import { SPORTS, type SportId } from '@/lib/sports';
 import { useStore } from '@/lib/store';
 import { colors } from '@/lib/theme';
 import { RUN_TYPES, type RunType } from '@/lib/types';
@@ -14,7 +15,16 @@ import { RUN_TYPES, type RunType } from '@/lib/types';
 export default function LogRun() {
   const params = useLocalSearchParams<{ type?: RunType; distance?: string; duration?: string; notes?: string }>();
   const router = useRouter();
-  const { addRun } = useStore();
+  const { addRun, profile } = useStore();
+  const mySports = profile?.sports ?? ['running'];
+  const prefilled = !!(params.type || params.distance || params.duration);
+  const [showRun, setShowRun] = useState(prefilled || mySports.includes('running'));
+  const ordered = [...SPORTS].sort((a, b) => Number(mySports.includes(b.id)) - Number(mySports.includes(a.id)));
+  const pick = (id: SportId) => {
+    if (id === 'running') setShowRun(true);
+    else if (id === 'strength') router.replace('/strength');
+    else router.replace({ pathname: '/sport/[sport]', params: { sport: id } });
+  };
   const [type, setType] = useState<RunType>(params.type ?? 'easy');
   const [distance, setDistance] = useState(params.distance ?? '');
   const [duration, setDuration] = useState(params.duration ?? '');
@@ -56,10 +66,25 @@ export default function LogRun() {
         </Pressable>
       </Row>
 
-      {!params.duration ? (
-        <Button title="🏋️  Log strength workout instead" variant="ghost" testID="log-strength" onPress={() => router.replace('/strength')} />
+      {!prefilled ? (
+        <View style={{ gap: 8 }} testID="log-hub">
+          <Label>What did you train?</Label>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {ordered.map((sp) => (
+              <Chip
+                key={sp.id}
+                label={`${sp.emoji} ${sp.label}`}
+                color={sp.color}
+                selected={sp.id === 'running' && showRun}
+                onPress={() => pick(sp.id)}
+                testID={`hub-${sp.id}`}
+              />
+            ))}
+          </View>
+        </View>
       ) : null}
-      {!params.duration ? (
+      {!showRun ? <Body style={{ textAlign: 'center', marginTop: 24 }}>Pick a sport to see its workouts.</Body> : null}
+      {showRun && !params.duration ? (
         <Button
           title="⏱  Start live run"
           variant="secondary"
@@ -68,59 +93,63 @@ export default function LogRun() {
         />
       ) : null}
 
-      <Card>
-        <Label>Run type</Label>
-        <Row style={{ gap: 8, flexWrap: 'wrap' }}>
-          {RUN_TYPES.map((t) => (
-            <Chip key={t.type} label={t.label} color={t.color} selected={type === t.type} onPress={() => setType(t.type)} testID={`type-${t.type}`} />
-          ))}
-        </Row>
-        <Row style={{ gap: 8, marginTop: 4 }}>
-          {['Today', 'Yesterday'].map((d, i) => (
-            <Chip key={d} label={d} selected={dayOffset === i} onPress={() => setDayOffset(i)} testID={`day-${i}`} />
-          ))}
-        </Row>
-      </Card>
+      {showRun ? (
+        <>
+          <Card>
+            <Label>Run type</Label>
+            <Row style={{ gap: 8, flexWrap: 'wrap' }}>
+              {RUN_TYPES.map((t) => (
+                <Chip key={t.type} label={t.label} color={t.color} selected={type === t.type} onPress={() => setType(t.type)} testID={`type-${t.type}`} />
+              ))}
+            </Row>
+            <Row style={{ gap: 8, marginTop: 4 }}>
+              {['Today', 'Yesterday'].map((d, i) => (
+                <Chip key={d} label={d} selected={dayOffset === i} onPress={() => setDayOffset(i)} testID={`day-${i}`} />
+              ))}
+            </Row>
+          </Card>
 
-      <Card>
-        <Row style={{ gap: 12, alignItems: 'flex-start' }}>
-          <Field label="Distance (km)" value={distance} onChangeText={setDistance} keyboardType="decimal-pad" placeholder="10" testID="log-distance" />
-          <Field label="Time" value={duration} onChangeText={setDuration} placeholder="50:00" testID="log-duration" />
-        </Row>
-        <View style={{ alignItems: 'center', paddingVertical: 8 }}>
-          <Text style={{ color: valid ? colors.text : colors.textMuted, fontSize: 40, fontWeight: '900' }} testID="log-pace">
-            {valid ? formatPace(sec / km) : '–:––'}
-          </Text>
-          <Label>avg pace / km</Label>
-        </View>
-        {hint ? <Body testID="log-hint">{hint}</Body> : null}
-      </Card>
+          <Card>
+            <Row style={{ gap: 12, alignItems: 'flex-start' }}>
+              <Field label="Distance (km)" value={distance} onChangeText={setDistance} keyboardType="decimal-pad" placeholder="10" testID="log-distance" />
+              <Field label="Time" value={duration} onChangeText={setDuration} placeholder="50:00" testID="log-duration" />
+            </Row>
+            <View style={{ alignItems: 'center', paddingVertical: 8 }}>
+              <Text style={{ color: valid ? colors.text : colors.textMuted, fontSize: 40, fontWeight: '900' }} testID="log-pace">
+                {valid ? formatPace(sec / km) : '–:––'}
+              </Text>
+              <Label>avg pace / km</Label>
+            </View>
+            {hint ? <Body testID="log-hint">{hint}</Body> : null}
+          </Card>
 
-      <Card>
-        <Label>Effort · {effort}/10</Label>
-        <Row style={{ gap: 4 }}>
-          {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-            <Pressable
-              key={n}
-              onPress={() => setEffort(n)}
-              testID={`effort-${n}`}
-              style={{
-                flex: 1,
-                height: 38,
-                borderRadius: 10,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: n <= effort ? (n > 7 ? colors.danger : n > 4 ? colors.warning : colors.success) : colors.surfaceAlt,
-              }}
-            >
-              <Text style={{ color: n <= effort ? '#111' : colors.textDim, fontWeight: '800' }}>{n}</Text>
-            </Pressable>
-          ))}
-        </Row>
-        <Field label="Notes" value={notes} onChangeText={setNotes} placeholder="How did it feel?" multiline testID="log-notes" style={{ minHeight: 70 }} />
-      </Card>
+          <Card>
+            <Label>Effort · {effort}/10</Label>
+            <Row style={{ gap: 4 }}>
+              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                <Pressable
+                  key={n}
+                  onPress={() => setEffort(n)}
+                  testID={`effort-${n}`}
+                  style={{
+                    flex: 1,
+                    height: 38,
+                    borderRadius: 10,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: n <= effort ? (n > 7 ? colors.danger : n > 4 ? colors.warning : colors.success) : colors.surfaceAlt,
+                  }}
+                >
+                  <Text style={{ color: n <= effort ? '#111' : colors.textDim, fontWeight: '800' }}>{n}</Text>
+                </Pressable>
+              ))}
+            </Row>
+            <Field label="Notes" value={notes} onChangeText={setNotes} placeholder="How did it feel?" multiline testID="log-notes" style={{ minHeight: 70 }} />
+          </Card>
 
-      <Button title="Save run" onPress={save} disabled={!valid} testID="log-save" />
+          <Button title="Save run" onPress={save} disabled={!valid} testID="log-save" />
+        </>
+      ) : null}
     </Screen>
   );
 }
