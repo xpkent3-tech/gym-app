@@ -3,6 +3,8 @@ import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type
 
 import { runnerById, userFriendCode } from './community';
 import type { StrengthSession } from './muscles';
+import { latestEntry, type BodyEntry } from './bodycomp';
+import type { HealthSnapshot } from './health';
 import type { FoodEntry } from './nutrition';
 import type { SportSession } from './sports';
 import { generatePlan, type PlanWeek } from './plan';
@@ -23,6 +25,8 @@ export interface AppData {
   strength: StrengthSession[];
   sessions: SportSession[];
   food: FoodEntry[];
+  bodyLog: BodyEntry[];
+  health: { connected: boolean; snapshot?: HealthSnapshot; syncedAt?: number };
 }
 
 type Action =
@@ -41,13 +45,28 @@ type Action =
   | { type: 'deleteSession'; id: string }
   | { type: 'addFood'; entry: FoodEntry }
   | { type: 'deleteFood'; id: string }
+  | { type: 'addBodyEntry'; entry: BodyEntry }
+  | { type: 'deleteBodyEntry'; id: string }
+  | { type: 'setHealth'; health: AppData['health'] }
   | { type: 'reset' };
 
 interface State extends AppData {
   hydrated: boolean;
 }
 
-export const EMPTY: AppData = { profile: null, runs: [], friends: [], kudos: [], pendingInvite: null, invitesSent: 0, strength: [], sessions: [], food: [] };
+export const EMPTY: AppData = {
+  profile: null,
+  runs: [],
+  friends: [],
+  kudos: [],
+  pendingInvite: null,
+  invitesSent: 0,
+  strength: [],
+  sessions: [],
+  food: [],
+  bodyLog: [],
+  health: { connected: false },
+};
 
 function sortRuns(runs: Run[]): Run[] {
   return [...runs].sort((a, b) => (a.date === b.date ? b.createdAt - a.createdAt : a.date < b.date ? 1 : -1));
@@ -72,6 +91,8 @@ export function migrate(raw: Partial<AppData>): AppData {
     strength: data.strength ?? [],
     sessions: data.sessions ?? [],
     food: data.food ?? [],
+    bodyLog: data.bodyLog ?? [],
+    health: data.health ?? { connected: false },
   };
 }
 
@@ -112,6 +133,27 @@ export function reducer(state: State, action: Action): State {
       return { ...state, food: [...state.food, action.entry] };
     case 'deleteFood':
       return { ...state, food: state.food.filter((f) => f.id !== action.id) };
+    case 'addBodyEntry': {
+      const bodyLog = [...state.bodyLog, action.entry];
+      const newest = latestEntry(bodyLog);
+      const profile =
+        state.profile && newest?.id === action.entry.id
+          ? {
+              ...state.profile,
+              body: {
+                heightCm: state.profile.body?.heightCm ?? 0,
+                ...state.profile.body,
+                weightKg: action.entry.weightKg,
+                ...(action.entry.bodyFatPct !== undefined ? { bodyFatPct: action.entry.bodyFatPct } : {}),
+              },
+            }
+          : state.profile;
+      return { ...state, bodyLog, profile };
+    }
+    case 'deleteBodyEntry':
+      return { ...state, bodyLog: state.bodyLog.filter((b) => b.id !== action.id) };
+    case 'setHealth':
+      return { ...state, health: action.health };
     case 'inviteSent':
       return { ...state, invitesSent: state.invitesSent + 1 };
     case 'reset':
@@ -135,6 +177,9 @@ interface Store extends State {
   deleteSession: (id: string) => void;
   addFood: (e: FoodEntry) => void;
   deleteFood: (id: string) => void;
+  addBodyEntry: (e: BodyEntry) => void;
+  deleteBodyEntry: (id: string) => void;
+  setHealth: (h: AppData['health']) => void;
   reset: () => void;
 }
 
@@ -177,6 +222,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       deleteSession: (id: string) => dispatch({ type: 'deleteSession', id }),
       addFood: (entry: FoodEntry) => dispatch({ type: 'addFood', entry }),
       deleteFood: (id: string) => dispatch({ type: 'deleteFood', id }),
+      addBodyEntry: (entry: BodyEntry) => dispatch({ type: 'addBodyEntry', entry }),
+      deleteBodyEntry: (id: string) => dispatch({ type: 'deleteBodyEntry', id }),
+      setHealth: (health: AppData['health']) => dispatch({ type: 'setHealth', health }),
       reset: () => dispatch({ type: 'reset' }),
     }),
     [],

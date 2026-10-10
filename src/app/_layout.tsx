@@ -34,6 +34,7 @@ function RootStack() {
         <Stack.Screen name="settings" />
         <Stack.Screen name="friends" />
         <Stack.Screen name="food/add" />
+        <Stack.Screen name="body-comp" />
         <Stack.Screen name="body" />
         <Stack.Screen name="strength" options={{ gestureEnabled: false }} />
         <Stack.Screen name="exercise/[id]" />

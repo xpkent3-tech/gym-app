@@ -33,7 +33,9 @@
           "photosPermission": "Stride uses your photos to estimate the calories and macros in your meals.",
           "cameraPermission": "Stride uses the camera to snap your meals and estimate calories and macros."
         }
-      ]
+      ],
+      "@kingstinct/react-native-healthkit",
+      "expo-font"
     ],
     "scheme": "stride",
     "experiments": {

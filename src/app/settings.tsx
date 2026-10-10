@@ -15,6 +15,10 @@ export default function Settings() {
         <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '600' }}>‹ Back</Text>
       </Pressable>
       <H1>Settings</H1>
+      <Card onPress={() => router.push('/body-comp')} testID="settings-health">
+        <Label>Integrations</Label>
+        <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>❤️ Apple Health & body composition ›</Text>
+      </Card>
       <Card>
         <Label>Data</Label>
         <Body>Everything is stored on this device.</Body>

@@ -39,9 +39,22 @@ export default function ProfileTab() {
         </Pressable>
       </Row>
       <H1 testID="profile-name">{profile.name}</H1>
+      <Text style={{ color: colors.textMuted, fontWeight: '700', letterSpacing: 1 }} testID="profile-code">
+        {profile.friendCode}
+      </Text>
       <Body>
         {profile.sex === 'female' ? 'Female' : 'Male'} · {profile.age} · {profile.experience} · race {formatDate(profile.raceDate)}
       </Body>
+      <Card onPress={() => router.push('/body-comp')} testID="profile-bodycomp">
+        <Row style={{ justifyContent: 'space-between' }}>
+          <Label>Body composition</Label>
+          <Text style={{ color: colors.primary, fontWeight: '700' }}>Open ›</Text>
+        </Row>
+        <Text style={{ color: colors.text, fontWeight: '800', fontSize: 16 }}>
+          {profile.body?.weightKg ? `${profile.body.weightKg} kg` : 'Add your weight'}
+          {profile.body?.bodyFatPct !== undefined ? ` · ${profile.body.bodyFatPct} % body fat` : ''}
+        </Text>
+      </Card>
       <Card testID="profile-sports">
         <Label>Your sports</Label>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -72,6 +85,20 @@ export default function ProfileTab() {
           </Body>
         </Card>
       ) : null}
+      <Card testID="profile-prs">
+        <Label>Personal records</Label>
+        {RECORD_DISTANCES.map((d) => {
+          const pr = prs.find((p) => p.key === d.key);
+          return (
+            <Row key={d.key} style={{ justifyContent: 'space-between', paddingVertical: 6 }}>
+              <Text style={{ color: colors.text, fontWeight: '700' }}>{d.label}</Text>
+              <Text style={{ color: pr ? colors.gold : colors.textMuted, fontWeight: '800' }} testID={`pr-${d.key}`}>
+                {pr ? formatDuration(pr.timeSec) : '—'}
+              </Text>
+            </Row>
+          );
+        })}
+      </Card>
       <Card testID="profile-history">
         <Label>Weekly distance · last 8 weeks</Label>
         <Row style={{ alignItems: 'flex-end', gap: 6, height: 96 }}>
@@ -141,28 +168,6 @@ export default function ProfileTab() {
           <Stat label="Runs" value={String(runs.length)} />
           <Stat label="Time" value={formatDuration(totalSec)} />
         </Row>
-      </Card>
-      <Card>
-        <Row style={{ justifyContent: 'space-between' }}>
-          <Label>Friend code</Label>
-          <Text style={{ color: colors.text, fontWeight: '800', letterSpacing: 1 }} testID="profile-code">
-            {profile.friendCode}
-          </Text>
-        </Row>
-      </Card>
-      <Card testID="profile-prs">
-        <Label>Personal records</Label>
-        {RECORD_DISTANCES.map((d) => {
-          const pr = prs.find((p) => p.key === d.key);
-          return (
-            <Row key={d.key} style={{ justifyContent: 'space-between', paddingVertical: 6 }}>
-              <Text style={{ color: colors.text, fontWeight: '700' }}>{d.label}</Text>
-              <Text style={{ color: pr ? colors.gold : colors.textMuted, fontWeight: '800' }} testID={`pr-${d.key}`}>
-                {pr ? formatDuration(pr.timeSec) : '—'}
-              </Text>
-            </Row>
-          );
-        })}
       </Card>
     </Screen>
   );

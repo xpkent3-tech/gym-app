@@ -14,6 +14,7 @@ import { colors } from '@/lib/theme';
 const MACRO_COLORS = { protein: '#FF5C7A', carbs: '#FFB020', fat: '#4C9EFF' };
 
 function BodySetup() {
+  const router = useRouter();
   const { profile, setProfile } = useStore();
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
@@ -41,6 +42,7 @@ function BodySetup() {
           />
         ))}
       </Row>
+      <Button title="❤️  Use Apple Health / body composition" variant="ghost" onPress={() => router.push('/body-comp')} testID="food-setup-health" />
       <Button
         title="Save targets"
         disabled={!valid}

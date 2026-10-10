@@ -1,0 +1,66 @@
+url: ${APP_URL || 'http://localhost:8081'}
+name: Body composition - weigh-ins, FFMI, Apple Health notice, targets follow body fat
+tags: [health, food]
+---
+- runFlow: subflows/onboard.yaml
+# Targets from size alone (Mifflin-St Jeor): 80 kg, 180 cm, 32 y male
+- tapOn:
+    id: tab-food
+- tapOn:
+    id: food-weight
+- inputText: "80"
+- tapOn:
+    id: food-height
+- inputText: "180"
+- tapOn:
+    id: food-setup-save
+- assertVisible:
+    id: food-kcal-target
+    text: "2390 kcal"
+# Body composition from Profile
+- tapOn:
+    id: tab-home
+- tapOn:
+    id: home-profile
+- tapOn:
+    id: profile-bodycomp
+- assertVisible:
+    id: bodycomp-screen
+- assertVisible:
+    id: health-status
+    text: "Available on iPhone"
+- assertVisible:
+    id: health-unsupported
+- tapOn:
+    id: bodycomp-input-weight
+- inputText: "80"
+- tapOn:
+    id: bodycomp-input-fat
+- inputText: "15"
+- tapOn:
+    id: bodycomp-save
+- assertVisible:
+    id: bodycomp-weight
+    text: "80 kg"
+- assertVisible:
+    id: bodycomp-lean
+    text: "68 kg"
+- assertVisible:
+    id: bodycomp-bmi
+    text: "24.7"
+- assertVisible:
+    id: bodycomp-ffmi
+    text: "21"
+- assertVisible:
+    id: bodycomp-history-0
+    text: "80 kg . 15 %"
+# Targets now use lean mass (Katch-McArdle)
+- tapOn:
+    id: bodycomp-back
+- tapOn:
+    id: profile-back
+- tapOn:
+    id: tab-food
+- assertVisible:
+    id: food-kcal-target
+    text: "2482 kcal"
