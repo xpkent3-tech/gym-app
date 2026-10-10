@@ -5,6 +5,7 @@ Stride is a React Native (Expo) app for marathon training. It aims for Hevy's fa
 ## Features
 
 - **Hybrid athletes**: Running, Strength, HYROX, CrossFit and Football — each with its own workout library (HYROX race with station splits, compromised running; Fran/Grace/Helen/Cindy/Murph; match/training/speed/conditioning), its own log form and rank, plus a combined Hybrid rank.
+- **Food journal (Cal AI-style)**: snap a photo (AI), describe a meal, search ~75 foods or quick-add; review portions; daily calories/macros from body size, goal and the day's training. The photo AI runs through `server/food-ai` (Claude vision + structured outputs) so no API key ships in the app — set `EXPO_PUBLIC_FOOD_AI_URL` to enable it.
 - **Fast run logging**: type, distance, time, effort and notes, with a live pace preview. Post-run summary with PR celebration.
 - **Generated marathon plan**: 12–20 weeks with base/build/peak/taper phases, cut-back weeks and race week. "Today" tells you what to run, and logging it ticks it off.
 - **Percentile rank**: your Riegel-predicted marathon compared against a log-normal model of finish times for your sex and age group, with tiers (Starter → Elite) and the time you need for the next tier. A weekly-volume percentile too.

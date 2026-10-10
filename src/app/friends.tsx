@@ -36,6 +36,7 @@ function RunnerRow({ runner, action, testID, sub }: { runner: Runner; action?: R
 }
 
 export default function Friends() {
+  const router = useRouter();
   const { profile, runs, friends, addFriend, invitesSent } = useStore();
   const toast = useToast();
   const invite = useInvite();
@@ -82,6 +83,9 @@ export default function Friends() {
 
   return (
     <Screen testID="friends-screen">
+      <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={12} testID="friends-back">
+        <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '600' }}>‹ Back</Text>
+      </Pressable>
       <H1>Friends</H1>
 
       <Card style={{ borderColor: colors.primary + '66' }}>

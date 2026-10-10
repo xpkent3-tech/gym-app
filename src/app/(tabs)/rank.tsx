@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/Avatar';
 import { Segmented } from '@/components/Segmented';
@@ -51,7 +51,12 @@ export default function Rank() {
 
   return (
     <Screen testID="rank-screen">
-      <H1>Your Rank</H1>
+      <Row style={{ justifyContent: 'space-between' }}>
+        <H1>Your Rank</H1>
+        <Pressable onPress={() => router.push('/friends')} hitSlop={10} testID="rank-friends">
+          <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 16 }}>👥 Friends</Text>
+        </Pressable>
+      </Row>
       <Segmented
         testID="rank-view"
         value={view}

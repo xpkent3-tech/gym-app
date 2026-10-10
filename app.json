@@ -26,7 +26,14 @@
       "output": "single"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Stride uses your photos to estimate the calories and macros in your meals.",
+          "cameraPermission": "Stride uses the camera to snap your meals and estimate calories and macros."
+        }
+      ]
     ],
     "scheme": "stride",
     "experiments": {

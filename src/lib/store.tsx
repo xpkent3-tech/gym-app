@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type
 
 import { runnerById, userFriendCode } from './community';
 import type { StrengthSession } from './muscles';
+import type { FoodEntry } from './nutrition';
 import type { SportSession } from './sports';
 import { generatePlan, type PlanWeek } from './plan';
 import type { Profile, Run } from './types';
@@ -21,6 +22,7 @@ export interface AppData {
   invitesSent: number;
   strength: StrengthSession[];
   sessions: SportSession[];
+  food: FoodEntry[];
 }
 
 type Action =
@@ -37,13 +39,15 @@ type Action =
   | { type: 'deleteStrength'; id: string }
   | { type: 'addSession'; session: SportSession }
   | { type: 'deleteSession'; id: string }
+  | { type: 'addFood'; entry: FoodEntry }
+  | { type: 'deleteFood'; id: string }
   | { type: 'reset' };
 
 interface State extends AppData {
   hydrated: boolean;
 }
 
-export const EMPTY: AppData = { profile: null, runs: [], friends: [], kudos: [], pendingInvite: null, invitesSent: 0, strength: [], sessions: [] };
+export const EMPTY: AppData = { profile: null, runs: [], friends: [], kudos: [], pendingInvite: null, invitesSent: 0, strength: [], sessions: [], food: [] };
 
 function sortRuns(runs: Run[]): Run[] {
   return [...runs].sort((a, b) => (a.date === b.date ? b.createdAt - a.createdAt : a.date < b.date ? 1 : -1));
@@ -67,6 +71,7 @@ export function migrate(raw: Partial<AppData>): AppData {
     friends: (data.friends ?? []).filter((id) => !!runnerById(id)),
     strength: data.strength ?? [],
     sessions: data.sessions ?? [],
+    food: data.food ?? [],
   };
 }
 
@@ -103,6 +108,10 @@ export function reducer(state: State, action: Action): State {
       return { ...state, sessions: [action.session, ...state.sessions] };
     case 'deleteSession':
       return { ...state, sessions: state.sessions.filter((s) => s.id !== action.id) };
+    case 'addFood':
+      return { ...state, food: [...state.food, action.entry] };
+    case 'deleteFood':
+      return { ...state, food: state.food.filter((f) => f.id !== action.id) };
     case 'inviteSent':
       return { ...state, invitesSent: state.invitesSent + 1 };
     case 'reset':
@@ -124,6 +133,8 @@ interface Store extends State {
   deleteStrength: (id: string) => void;
   addSession: (s: SportSession) => void;
   deleteSession: (id: string) => void;
+  addFood: (e: FoodEntry) => void;
+  deleteFood: (id: string) => void;
   reset: () => void;
 }
 
@@ -164,6 +175,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       deleteStrength: (id: string) => dispatch({ type: 'deleteStrength', id }),
       addSession: (session: SportSession) => dispatch({ type: 'addSession', session }),
       deleteSession: (id: string) => dispatch({ type: 'deleteSession', id }),
+      addFood: (entry: FoodEntry) => dispatch({ type: 'addFood', entry }),
+      deleteFood: (id: string) => dispatch({ type: 'deleteFood', id }),
       reset: () => dispatch({ type: 'reset' }),
     }),
     [],

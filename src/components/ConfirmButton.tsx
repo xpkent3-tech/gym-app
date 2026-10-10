@@ -9,15 +9,27 @@ export function ConfirmButton({
   confirmTitle,
   onConfirm,
   testID,
+  subtle,
 }: {
   title: string;
   message: string;
   confirmTitle: string;
   onConfirm: () => void;
   testID: string;
+  /** Low-emphasis text button for routine deletions. */
+  subtle?: boolean;
 }) {
   const [asking, setAsking] = useState(false);
-  if (!asking) return <Button title={title} variant="danger" onPress={() => setAsking(true)} testID={testID} />;
+  if (!asking)
+    return (
+      <Button
+        title={title}
+        variant={subtle ? 'ghost' : 'danger'}
+        style={subtle ? { minHeight: 34, alignSelf: 'flex-end', paddingHorizontal: 0 } : undefined}
+        onPress={() => setAsking(true)}
+        testID={testID}
+      />
+    );
   return (
     <Card>
       <Body>{message}</Body>

@@ -1,0 +1,123 @@
+url: ${APP_URL || 'http://localhost:8081'}
+name: Food journal - targets, describe, search, quick add, snap fallback
+tags: [core, food]
+---
+- runFlow: subflows/onboard.yaml
+- tapOn:
+    id: tab-food
+- assertVisible:
+    id: food-setup
+# Targets from body + goal
+- tapOn:
+    id: food-weight
+- inputText: "75"
+- tapOn:
+    id: food-height
+- inputText: "180"
+- tapOn:
+    id: goal-maintain
+- tapOn:
+    id: food-setup-save
+- assertVisible:
+    id: food-kcal-target
+    text: "\\d{4} kcal"
+- assertVisible:
+    id: food-kcal-eaten
+    text: "0 kcal"
+# Describe (on-device parser, no AI service configured in e2e)
+- tapOn:
+    id: meal-breakfast-add
+- assertVisible:
+    id: food-add
+- tapOn:
+    id: describe-input
+- inputText: "2 eggs and a banana"
+- tapOn:
+    id: describe-go
+- assertVisible:
+    id: review-item-0-name
+    text: "Egg, whole"
+- assertVisible:
+    id: review-item-1-name
+    text: "Banana"
+- assertVisible:
+    id: review-kcal
+    text: "250 kcal"
+# Adjust a portion before saving
+- tapOn:
+    id: review-item-0-x1.5
+- assertVisible:
+    id: review-kcal
+    text: "322 kcal"
+- tapOn:
+    id: review-save
+- assertVisible:
+    id: toast
+    text: "Added 322 kcal to breakfast"
+- assertVisible:
+    id: meal-breakfast-kcal
+    text: "322 kcal"
+- assertVisible:
+    id: food-kcal-eaten
+    text: "322 kcal"
+# Search the database
+- tapOn:
+    id: meal-lunch-add
+- tapOn:
+    id: food-mode-search
+- tapOn:
+    id: search-food
+- inputText: "chicken"
+- tapOn:
+    id: search-food-0-100g
+- assertVisible:
+    id: review-kcal
+    text: "165 kcal"
+- tapOn:
+    id: review-save
+- assertVisible:
+    id: meal-lunch-kcal
+    text: "165 kcal"
+# Quick add
+- tapOn:
+    id: meal-dinner-add
+- tapOn:
+    id: food-mode-quick
+- tapOn:
+    id: quick-name
+- inputText: "Restaurant pasta"
+- tapOn:
+    id: quick-kcal
+- inputText: "650"
+- tapOn:
+    id: quick-go
+- tapOn:
+    id: review-save
+- assertVisible:
+    id: meal-dinner-kcal
+    text: "650 kcal"
+- assertVisible:
+    id: food-kcal-eaten
+    text: "1137 kcal"
+# Snap without the AI service explains and offers Describe
+- tapOn:
+    id: meal-snacks-add
+- tapOn:
+    id: food-mode-snap
+- assertVisible:
+    id: snap-unavailable
+- tapOn:
+    id: snap-describe-instead
+- assertVisible:
+    id: describe-input
+- tapOn:
+    id: food-add-cancel
+# Delete a meal
+- tapOn:
+    id: meal-dinner-clear
+- tapOn:
+    id: meal-dinner-clear-confirm
+- assertVisible:
+    id: meal-dinner-kcal
+    text: "0 kcal"
+- takeScreenshot: .maestro/output/food

@@ -1,3 +1,4 @@
+import type { Body, NutritionGoal } from './nutrition';
 import type { SportId } from './sports';
 
 export type Sex = 'male' | 'female';
@@ -37,6 +38,8 @@ export interface Profile {
   friendCode?: string;
   /** Disciplines this athlete trains. */
   sports?: SportId[];
+  body?: Body;
+  nutritionGoal?: NutritionGoal;
 }
 
 export const RUN_TYPES: { type: RunType; label: string; color: string }[] = [

@@ -15,7 +15,9 @@ tags: [social]
 - assertVisible:
     id: board-empty
 - tapOn:
-    id: tab-friends
+    id: tab-rank
+- tapOn:
+    id: rank-friends
 - assertVisible:
     id: friends-empty
 - assertVisible:
@@ -56,6 +58,8 @@ tags: [social]
 - assertVisible: "Your friends · 2"
 # Friends feed + kudos
 - tapOn:
+    id: friends-back
+- tapOn:
     id: tab-home
 - tapOn:
     id: feed-friends
@@ -93,7 +97,9 @@ tags: [social]
 - takeScreenshot: .maestro/output/leaderboard
 # Remove a friend from their profile
 - tapOn:
-    id: tab-friends
+    id: tab-rank
+- tapOn:
+    id: rank-friends
 - tapOn:
     id: friend-row-0
 - assertVisible:

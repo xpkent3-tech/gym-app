@@ -31,7 +31,9 @@ tags: [social, growth]
       id: home-screen
     timeout: 10000
 - tapOn:
-    id: tab-friends
+    id: tab-rank
+- tapOn:
+    id: rank-friends
 - assertVisible:
     id: friend-row-0
 - assertVisible: "Maya Chen"
