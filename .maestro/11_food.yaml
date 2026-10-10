@@ -3,8 +3,13 @@ name: Food journal - targets, describe, search, quick add, snap fallback
 tags: [core, food]
 ---
 - runFlow: subflows/onboard.yaml
+# Home surfaces the calorie counter, prompting set-up first
+- assertVisible:
+    id: home-calories-setup
 - tapOn:
-    id: tab-food
+    id: home-calories-setup
+- assertVisible:
+    id: food-setup
 - assertVisible:
     id: food-setup
 # Targets from body + goal
@@ -120,4 +125,18 @@ tags: [core, food]
 - assertVisible:
     id: meal-dinner-kcal
     text: "0 kcal"
+# Home shows today's calories and a Log food shortcut
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: home-calories
+- assertVisible:
+    id: home-calories-eaten
+    text: "487 / .* kcal"
+- tapOn:
+    id: home-calories-add
+- assertVisible:
+    id: food-add
+- tapOn:
+    id: food-add-cancel
 - takeScreenshot: .maestro/output/food

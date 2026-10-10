@@ -8,6 +8,7 @@ import { SportSessionCard } from '@/components/SportSessionCard';
 import { StrengthCard } from '@/components/StrengthCard';
 import { intensities } from '@/lib/muscles';
 import { useWeeklyMuscles } from '@/lib/useMuscles';
+import { CaloriesCard } from '@/components/CaloriesCard';
 import { ChallengeCard } from '@/components/ChallengeCard';
 import { LevelChip } from '@/components/LevelChip';
 import { FriendRunCard } from '@/components/FriendRunCard';
@@ -94,6 +95,8 @@ export default function Home() {
           </Text>
         </Card>
       ) : null}
+
+      <CaloriesCard />
 
       {runner ? <TodayCard plan={plan} runs={runs} today={today} /> : null}
 

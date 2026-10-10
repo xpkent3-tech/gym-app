@@ -5,8 +5,9 @@ import { bodyBack } from 'react-native-body-highlighter/dist/assets/bodyBack';
 import { bodyFemaleBack } from 'react-native-body-highlighter/dist/assets/bodyFemaleBack';
 import { bodyFemaleFront } from 'react-native-body-highlighter/dist/assets/bodyFemaleFront';
 import { bodyFront } from 'react-native-body-highlighter/dist/assets/bodyFront';
-import Svg, { Defs, G, Path, Pattern, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Defs, Ellipse, G, LinearGradient, Path, Pattern, RadialGradient, Stop } from 'react-native-svg';
 
+import { EXTREMITIES, type Box, type ExtremitySlug } from '@/lib/bodyExtremities';
 import type { MuscleId, MuscleLoad } from '@/lib/muscles';
 import { colors } from '@/lib/theme';
 import type { BodyStyle, Sex } from '@/lib/types';
@@ -55,30 +56,108 @@ export const useBodyStyle = () => useContext(BodyStyleContext);
  * than the hips, for a lean, athletic, typically female silhouette.
  */
 const FEMALE_WIDTH: Partial<Record<Slug, number>> = {
-  head: 0.9,
-  hair: 0.9,
-  neck: 0.82,
-  trapezius: 0.8,
-  deltoids: 0.82,
-  chest: 0.84,
-  'upper-back': 0.82,
-  biceps: 0.82,
-  triceps: 0.82,
-  forearm: 0.82,
-  hands: 0.82,
+  head: 0.92,
+  neck: 0.9,
+  trapezius: 1.0,
+  deltoids: 1.04,
+  chest: 0.94,
+  'upper-back': 1.02,
+  biceps: 1.0,
+  triceps: 1.0,
+  forearm: 0.96,
+  hands: 0.95,
   abs: 0.86,
-  obliques: 0.86,
-  'lower-back': 0.86,
-  gluteal: 0.92,
-  adductors: 0.9,
-  quadriceps: 0.88,
-  hamstring: 0.88,
-  knees: 0.9,
-  calves: 0.9,
-  tibialis: 0.9,
-  ankles: 0.9,
-  feet: 0.9,
+  obliques: 0.8,
+  'lower-back': 0.84,
+  gluteal: 1.02,
+  adductors: 1.0,
+  quadriceps: 1.04,
+  hamstring: 1.04,
+  knees: 1.0,
+  calves: 1.04,
+  tibialis: 1.0,
+  ankles: 1.0,
+  feet: 1.0,
 };
+
+/** Each artwork has its own frame: the library's female art is centred at x=320 (front) / 1143 (back). */
+const FRAMES: Record<Sex, Record<BodyView, { vb: [number, number, number, number]; cx: number }>> = {
+  male: { front: { vb: [0, 0, 724, 1448], cx: 362 }, back: { vb: [724, 0, 724, 1448], cx: 1086 } },
+  female: { front: { vb: [-50, -40, 734, 1538], cx: 320 }, back: { vb: [776, -40, 734, 1538], cx: 1143 } },
+};
+
+/** Extremities render as smooth skin shapes: each path strokes itself in its own colour so fingers/toes merge. */
+const SMOOTH: Slug[] = ['hands', 'feet', 'ankles', 'knees'];
+
+type Blob = { d?: string; cx?: number; cy?: number; rx?: number; ry?: number; rot?: number };
+
+const f = (n: number) => Math.round(n * 10) / 10;
+
+/** Clean hand / foot / ankle / knee silhouettes drawn inside the artwork's measured boxes. */
+function extremityBlobs(slug: ExtremitySlug, b: Box, innerIsRight: boolean): Blob[] {
+  let [x0, y0, x1, y1] = b;
+  const mx = (x0 + x1) / 2;
+  // The artwork's hand boxes include spread fingers; a relaxed hand is narrower and shorter.
+  const hand = slug === 'hands';
+  const wide = x1 - x0 > 85; // the male artwork's hands are bigger than the female's
+  const w = (x1 - x0) * (hand ? (wide ? 0.62 : 0.8) : 1);
+  const h = (y1 - y0) * (hand ? (wide ? 0.74 : 0.86) : 1);
+  x0 = mx - w / 2;
+  x1 = mx + w / 2;
+  y1 = y0 + h;
+  switch (slug) {
+    case 'hands': {
+      const top = y0 - h * 0.1; // overlap the forearm so the wrist connects
+      const hh = y1 - top;
+      const thumbX = innerIsRight ? x1 - w * 0.08 : x0 + w * 0.08;
+      return [
+        {
+          // wrist narrows to a broad palm, tapering to rounded fingertips
+          d: `M${f(mx - 0.2 * w)} ${f(top)} L${f(mx + 0.2 * w)} ${f(top)} C${f(mx + 0.5 * w)} ${f(top + 0.25 * hh)} ${f(x1)} ${f(top + 0.5 * hh)} ${f(mx + 0.36 * w)} ${f(top + 0.84 * hh)} C${f(mx + 0.24 * w)} ${f(y1 + h * 0.04)} ${f(mx - 0.24 * w)} ${f(y1 + h * 0.04)} ${f(mx - 0.36 * w)} ${f(top + 0.84 * hh)} C${f(x0)} ${f(top + 0.5 * hh)} ${f(mx - 0.5 * w)} ${f(top + 0.25 * hh)} ${f(mx - 0.2 * w)} ${f(top)} Z`,
+        },
+        { cx: thumbX, cy: top + hh * 0.4, rx: w * 0.12, ry: hh * 0.2, rot: innerIsRight ? -16 : 16 },
+      ];
+    }
+    case 'feet':
+      return [
+        {
+          // narrow at the ankle, widening to the toes
+          d: `M${f(mx - 0.26 * w)} ${f(y0)} L${f(mx + 0.26 * w)} ${f(y0)} C${f(mx + 0.4 * w)} ${f(y0 + 0.35 * h)} ${f(x1)} ${f(y0 + 0.5 * h)} ${f(x1)} ${f(y0 + 0.78 * h)} C${f(x1)} ${f(y1 + h * 0.05)} ${f(x0)} ${f(y1 + h * 0.05)} ${f(x0)} ${f(y0 + 0.78 * h)} C${f(x0)} ${f(y0 + 0.5 * h)} ${f(mx - 0.4 * w)} ${f(y0 + 0.35 * h)} ${f(mx - 0.26 * w)} ${f(y0)} Z`,
+        },
+      ];
+    case 'ankles':
+      return [{ cx: mx, cy: y0 + h * 0.5, rx: w * 0.36, ry: h * 0.5 }];
+    case 'knees':
+      return [{ cx: mx, cy: y0 + h * 0.46, rx: w * 0.4, ry: h * 0.2 }];
+  }
+}
+
+function ponytail(view: BodyView, cx: number): { d: string; tie?: string }[] {
+  if (view === 'front') {
+    return [
+      // fringe / hairline cap
+      {
+        d: `M${cx - 70} 150 C${cx - 82} 108 ${cx - 52} 68 ${cx} 68 C${cx + 52} 68 ${cx + 82} 108 ${cx + 70} 150 C${cx + 58} 118 ${cx + 22} 102 ${cx - 6} 106 C${cx - 40} 110 ${cx - 62} 128 ${cx - 70} 150 Z`,
+      },
+      // side locks
+      { d: `M${cx - 70} 150 C${cx - 77} 170 ${cx - 73} 190 ${cx - 64} 198 C${cx - 62} 178 ${cx - 60} 162 ${cx - 58} 148 Z` },
+      { d: `M${cx + 70} 150 C${cx + 77} 170 ${cx + 73} 190 ${cx + 64} 198 C${cx + 62} 178 ${cx + 60} 162 ${cx + 58} 148 Z` },
+      // ponytail tuft rising behind the crown
+      { d: `M${cx - 4} 72 C${cx - 18} 42 ${cx - 2} 8 ${cx + 30} 2 C${cx + 46} 28 ${cx + 36} 58 ${cx + 20} 74 Z` },
+    ];
+  }
+  return [
+    // back of the head
+    {
+      d: `M${cx - 72} 160 C${cx - 84} 100 ${cx - 52} 66 ${cx} 66 C${cx + 52} 66 ${cx + 84} 100 ${cx + 72} 160 C${cx + 70} 195 ${cx + 52} 224 ${cx} 228 C${cx - 52} 224 ${cx - 70} 195 ${cx - 72} 160 Z`,
+    },
+    // ponytail hanging down the back
+    {
+      d: `M${cx - 15} 84 C${cx - 38} 150 ${cx - 34} 270 ${cx - 18} 350 C${cx - 8} 386 ${cx + 8} 386 ${cx + 18} 350 C${cx + 34} 270 ${cx + 38} 150 ${cx + 15} 84 Z`,
+      tie: `M${cx - 18} 92 L${cx + 18} 92 L${cx + 17} 106 L${cx - 17} 106 Z`,
+    },
+  ];
+}
 
 /** Classic style: female core and chest are flattened (no carved eight-pack). */
 const FEMALE_SMOOTH: Slug[] = ['abs', 'obliques', 'chest'];
@@ -98,7 +177,7 @@ const REALISTIC = {
   heat: ['#8F2830', '#C2353B', '#EB5536', '#FF8A3D'],
   skin: '#C99A82',
   chestSkin: '#D2AE96',
-  hair: '#3B2A22',
+  hair: '#4A2E22',
   tendon: '#E8D3BF',
   fascia: '#24090C',
   glow: '#FFD9B0',
@@ -181,6 +260,7 @@ export function BodyMap({ view, sex = 'male', heat, primary = [], secondary = []
   // mounted (hidden) in the navigation stack would otherwise capture the reference.
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const gid = (c: string) => `g${uid}${c.slice(1)}`;
+  const hairId = `h${uid}`;
   const pid = (a: number) => `p${uid}${a < 0 ? 'm' : ''}${Math.abs(a)}`;
   const female = sex === 'female';
 
@@ -201,7 +281,6 @@ export function BodyMap({ view, sex = 'male', heat, primary = [], secondary = []
     const b = slugBand.get(slug) ?? -1;
     if (realistic) {
       if (slug === 'hair') return REALISTIC.hair;
-      if (slug === 'knees' || slug === 'ankles') return REALISTIC.tendon;
       if (SKIN.includes(slug)) return REALISTIC.skin;
       if (female && slug === 'chest') return b < 0 ? REALISTIC.chestSkin : mix(REALISTIC.chestSkin, REALISTIC.heat[b], 0.65);
       return b < 0 ? REALISTIC.rest : REALISTIC.heat[b];
@@ -211,16 +290,17 @@ export function BodyMap({ view, sex = 'male', heat, primary = [], secondary = []
     return b === 3 ? CLASSIC.primary : b === 1 ? CLASSIC.secondary : CLASSIC.rest;
   };
 
-  const parts = ASSETS[sex][view];
+  const parts = ASSETS[sex][view].filter((p) => !(female && realistic && p.slug === 'hair'));
   const fills = [...new Set(parts.map((p) => fillFor(p.slug as Slug)))];
   const showFibres = realistic && width >= 70;
   const angles = showFibres ? [...new Set(Object.values(FIBRE_ANGLE).flatMap((a) => [a!, -a!]))] : [];
   const selectedSlug = selected ? MUSCLE_SLUG[selected] : null;
-  const viewBox = view === 'front' ? '0 0 724 1448' : '724 0 724 1448';
+  const frame = FRAMES[sex][view];
+  const viewBox = frame.vb.join(' ');
   const strokeW = Math.max(1.5, 400 / width);
 
   return (
-    <Svg width={width} height={width * 2} viewBox={viewBox}>
+    <Svg width={width} height={(width * frame.vb[3]) / frame.vb[2]} viewBox={viewBox}>
       <Defs>
         {fills.map((c) => (
           <RadialGradient key={c} id={gid(c)} cx="38%" cy="30%" rx="75%" ry="75%" fx="35%" fy="25%">
@@ -229,6 +309,11 @@ export function BodyMap({ view, sex = 'male', heat, primary = [], secondary = []
             <Stop offset="1" stopColor={shade(c, realistic ? -0.55 : -0.45)} />
           </RadialGradient>
         ))}
+        <LinearGradient id={hairId} x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor="#7A4B33" />
+          <Stop offset="0.5" stopColor={REALISTIC.hair} />
+          <Stop offset="1" stopColor="#1F120C" />
+        </LinearGradient>
         {angles.map((a) => (
           <Pattern key={a} id={pid(a)} width={7} height={7} patternUnits="userSpaceOnUse" patternTransform={`rotate(${a})`}>
             <Path d="M0 0 L0 7" stroke="#FFFFFF" strokeOpacity={0.14} strokeWidth={1.3} />
@@ -244,29 +329,68 @@ export function BodyMap({ view, sex = 'male', heat, primary = [], secondary = []
         const muscle = slugMuscle.get(slug);
         const isSel = !!selectedSlug && selectedSlug === slug;
         const sx = female ? (FEMALE_WIDTH[slug] ?? 1) : 1;
-        const cx = view === 'front' ? 362 : 1086;
+        const cx = frame.cx;
         const smooth = !realistic && female && FEMALE_SMOOTH.includes(slug) && !isSel;
         const glow = realistic && b === 3 && !isSel;
         const angle = FIBRE_ANGLE[slug];
         const fibres = showFibres && angle !== undefined && !(female && slug === 'chest');
+        if (realistic && SMOOTH.includes(slug)) {
+          const boxes = EXTREMITIES[`${sex}.${view}`]?.[slug as ExtremitySlug];
+          if (!boxes) return null;
+          return (
+            <G key={slug} transform={sx === 1 ? undefined : `translate(${cx} 0) scale(${sx} 1) translate(${-cx} 0)`}>
+              {([boxes.L, boxes.R] as Box[]).flatMap((bx, side) =>
+                extremityBlobs(slug as ExtremitySlug, bx, side === 0).map((o, i) =>
+                  o.d ? (
+                    <Path
+                      key={`${side}-${i}`}
+                      d={o.d}
+                      fill={`url(#${gid(fill)})`}
+                      stroke={shade(fill, -0.3)}
+                      strokeWidth={strokeW * 0.8}
+                      strokeLinejoin="round"
+                    />
+                  ) : (
+                    <Ellipse
+                      key={`${side}-${i}`}
+                      cx={o.cx}
+                      cy={o.cy}
+                      rx={o.rx}
+                      ry={o.ry}
+                      rotation={o.rot}
+                      originX={o.cx}
+                      originY={o.cy}
+                      fill={`url(#${gid(fill)})`}
+                      stroke={shade(fill, -0.3)}
+                      strokeWidth={strokeW * 0.8}
+                    />
+                  ),
+                ),
+              )}
+            </G>
+          );
+        }
         const sides: [string[], 1 | -1][] = [
           [part.path?.common ?? [], 1],
           [part.path?.left ?? [], 1],
           [part.path?.right ?? [], -1],
         ];
         // Realistic: dark fascia between muscles, pale tendinous inscriptions across the abs.
-        const stroke = isSel
-          ? '#FFFFFF'
-          : glow
-            ? REALISTIC.glow
-            : realistic
-              ? slug === 'abs'
-                ? REALISTIC.tendon
-                : REALISTIC.fascia
-              : smooth
-                ? shade(fill, -0.08)
-                : colors.bg;
-        const sw = isSel ? strokeW * 2.2 : glow ? strokeW * 1.4 : realistic && slug === 'abs' ? strokeW * 1.6 : female ? strokeW * 0.75 : strokeW;
+        const mitten = realistic && SMOOTH.includes(slug);
+        const stroke = mitten
+          ? shade(fill, -0.12)
+          : isSel
+            ? '#FFFFFF'
+            : glow
+              ? REALISTIC.glow
+              : realistic
+                ? slug === 'abs'
+                  ? REALISTIC.tendon
+                  : REALISTIC.fascia
+                : smooth
+                  ? shade(fill, -0.08)
+                  : colors.bg;
+        const sw = mitten ? 9 : isSel ? strokeW * 2.2 : glow ? strokeW * 1.4 : realistic && slug === 'abs' ? strokeW * 1.6 : female ? strokeW * 0.75 : strokeW;
         return (
           <G key={slug} transform={sx === 1 ? undefined : `translate(${cx} 0) scale(${sx} 1) translate(${-cx} 0)`}>
             {sides.flatMap(([ds, dir], si) =>
@@ -287,6 +411,16 @@ export function BodyMap({ view, sex = 'male', heat, primary = [], secondary = []
           </G>
         );
       })}
+      {female && realistic ? (
+        <G>
+          {ponytail(view, frame.cx).map((h, i) => (
+            <G key={i}>
+              <Path d={h.d} fill={`url(#${hairId})`} stroke="#1B100B" strokeWidth={strokeW} strokeLinejoin="round" />
+              {h.tie ? <Path d={h.tie} fill={colors.primary} stroke="#1B100B" strokeWidth={strokeW * 0.6} /> : null}
+            </G>
+          ))}
+        </G>
+      ) : null}
     </Svg>
   );
 }

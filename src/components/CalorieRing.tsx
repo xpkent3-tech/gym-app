@@ -26,10 +26,12 @@ export function CalorieRing({ eaten, target, size = 168 }: { eaten: number; targ
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </Svg>
-      <Text style={{ color: colors.text, fontSize: 34, fontWeight: '900' }} testID="food-kcal-left">
+      <Text style={{ color: colors.text, fontSize: Math.round(size * 0.2), fontWeight: '900' }} testID="food-kcal-left">
         {Math.abs(left)}
       </Text>
-      <Text style={{ color: over ? colors.danger : colors.textDim, fontWeight: '700', fontSize: 13 }}>{over ? 'kcal over' : 'kcal left'}</Text>
+      <Text style={{ color: over ? colors.danger : colors.textDim, fontWeight: '700', fontSize: size < 130 ? 11 : 13 }}>
+        {over ? 'kcal over' : 'kcal left'}
+      </Text>
     </View>
   );
 }
