@@ -16,8 +16,10 @@ import { colors } from '@/lib/theme';
 import { useInvite } from '@/lib/useInvite';
 import { celebrationFor } from '@/lib/progression';
 import { runTypeMeta } from '@/lib/types';
+import { useBodySex } from '@/lib/useBodySex';
 
 export default function RunDetail() {
+  const sex = useBodySex();
   const { id, fresh } = useLocalSearchParams<{ id: string; fresh?: string }>();
   const router = useRouter();
   const { runs, profile, deleteRun, plan, friends, invitesSent } = useStore();
@@ -110,7 +112,7 @@ export default function RunDetail() {
 
       <Card testID="run-muscles">
         <Label>Muscles worked</Label>
-        <BodyPair heat={intensities(runLoad(run))} width={84} />
+        <BodyPair sex={sex} heat={intensities(runLoad(run))} width={84} />
       </Card>
 
       {isFresh && rank ? (

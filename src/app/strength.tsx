@@ -13,6 +13,7 @@ import { muscleLabel, type MuscleId } from '@/lib/muscles';
 import { formatDuration } from '@/lib/pace';
 import { XP } from '@/lib/progression';
 import { useStore } from '@/lib/store';
+import { useBodySex } from '@/lib/useBodySex';
 import { colors, radius } from '@/lib/theme';
 
 interface DraftSet {
@@ -30,6 +31,7 @@ const FILTERS: MuscleId[] = ['glutes', 'hamstrings', 'quads', 'calves', 'abs', '
 const emptySets = (): DraftSet[] => [0, 1, 2].map(() => ({ kg: '', reps: '' }));
 
 function ExercisePicker({ onPick, onClose, already }: { onPick: (e: Exercise) => void; onClose: () => void; already: string[] }) {
+  const sex = useBodySex();
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [muscle, setMuscle] = useState<MuscleId | null>(null);
@@ -55,7 +57,7 @@ function ExercisePicker({ onPick, onClose, already }: { onPick: (e: Exercise) =>
         return (
           <Card key={e.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 }}>
             <View style={{ backgroundColor: colors.bg, borderRadius: 10 }}>
-              <BodyMap view={thumbView(e)} primary={e.primary} secondary={e.secondary} width={40} />
+              <BodyMap sex={sex} view={thumbView(e)} primary={e.primary} secondary={e.secondary} width={40} />
             </View>
             <Pressable style={{ flex: 1 }} onPress={() => router.push(`/exercise/${e.id}`)} testID={`picker-info-${e.id}`}>
               <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>{e.name}</Text>
@@ -79,6 +81,7 @@ function ExercisePicker({ onPick, onClose, already }: { onPick: (e: Exercise) =>
 }
 
 export default function StrengthWorkout() {
+  const sex = useBodySex();
   const params = useLocalSearchParams<{ add?: string }>();
   const router = useRouter();
   const toast = useToast();
@@ -147,7 +150,7 @@ export default function StrengthWorkout() {
 
       <Card style={{ paddingVertical: 14 }} testID="strength-preview">
         <Label>This workout targets</Label>
-        <BodyPair primary={primary} secondary={secondary} width={92} />
+        <BodyPair sex={sex} primary={primary} secondary={secondary} width={92} />
         <Body style={{ textAlign: 'center', fontSize: 13 }}>{primary.map(muscleLabel).join(' · ') || 'Add exercises to see muscles'}</Body>
       </Card>
 

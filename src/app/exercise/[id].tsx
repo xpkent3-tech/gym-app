@@ -6,8 +6,10 @@ import { Body, Button, Card, H1, Label, Pill, Row, Screen } from '@/components/u
 import { exerciseById } from '@/lib/exercises';
 import { muscleLabel } from '@/lib/muscles';
 import { colors } from '@/lib/theme';
+import { useBodySex } from '@/lib/useBodySex';
 
 export default function ExerciseDetail() {
+  const sex = useBodySex();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const ex = exerciseById(id);
@@ -28,7 +30,7 @@ export default function ExerciseDetail() {
       <H1 testID="exercise-name">{ex.name}</H1>
       <Body>{ex.equipment}</Body>
       <Card style={{ paddingVertical: 20 }}>
-        <BodyPair primary={ex.primary} secondary={ex.secondary} width={140} />
+        <BodyPair sex={sex} primary={ex.primary} secondary={ex.secondary} width={140} />
         <Row style={{ gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginTop: 8 }}>
           {ex.primary.map((m) => (
             <Pill key={m} text={`PRIMARY · ${muscleLabel(m).toUpperCase()}`} color={colors.primary} testID={`exercise-primary-${m}`} />

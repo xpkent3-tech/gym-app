@@ -1,80 +1,110 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Animated, Platform, Pressable, Text, View } from 'react-native';
-import Svg, { Defs, Ellipse, LinearGradient, Path, RadialGradient, Stop } from 'react-native-svg';
+import type { BodyPart, Slug } from 'react-native-body-highlighter';
+import { bodyBack } from 'react-native-body-highlighter/dist/assets/bodyBack';
+import { bodyFemaleBack } from 'react-native-body-highlighter/dist/assets/bodyFemaleBack';
+import { bodyFemaleFront } from 'react-native-body-highlighter/dist/assets/bodyFemaleFront';
+import { bodyFront } from 'react-native-body-highlighter/dist/assets/bodyFront';
+import Svg, { Defs, G, Path, RadialGradient, Stop } from 'react-native-svg';
 
 import type { MuscleId, MuscleLoad } from '@/lib/muscles';
 import { colors } from '@/lib/theme';
+import type { Sex } from '@/lib/types';
+
+// Anatomy artwork: react-native-body-highlighter (MIT, © ELABBASSI Hicham). Only the path data is used.
 
 export type BodyView = 'front' | 'back';
 
-/** Mirrors an absolute M/C/L/Z path across the body's centre line (x = 100). */
-function mirror(d: string): string {
-  let i = 0;
-  return d.replace(/-?\d+(\.\d+)?/g, (n) => (i++ % 2 === 0 ? String(200 - Number(n)) : n));
-}
+const ASSETS: Record<Sex, Record<BodyView, BodyPart[]>> = {
+  male: { front: bodyFront, back: bodyBack },
+  female: { front: bodyFemaleFront, back: bodyFemaleBack },
+};
 
-const both = (d: string) => [d, mirror(d)];
+/** Which artwork region shows each muscle. Hip flexors are deep and have no visible region. */
+export const MUSCLE_SLUG: Record<MuscleId, Slug | null> = {
+  chest: 'chest',
+  shoulders: 'deltoids',
+  biceps: 'biceps',
+  triceps: 'triceps',
+  forearms: 'forearm',
+  traps: 'trapezius',
+  neck: 'neck',
+  upperBack: 'upper-back',
+  lats: 'upper-back',
+  lowerBack: 'lower-back',
+  abs: 'abs',
+  obliques: 'obliques',
+  hipFlexors: null,
+  glutes: 'gluteal',
+  adductors: 'adductors',
+  quads: 'quadriceps',
+  hamstrings: 'hamstring',
+  calves: 'calves',
+  tibialis: 'tibialis',
+};
 
-// Left half of the silhouette (viewer's left), from the neck round the arm and leg back to the centre line.
-const HALF_SILHOUETTE =
-  'M100 60 L90 60 C82 63 72 65 64 69 C56 72 50 79 49 90 C47 104 45 118 44 130 C42 146 39 160 38 174 C37 182 36 190 38 196 C42 200 46 196 46 190 ' +
-  'C48 176 51 160 54 146 C56 132 58 118 61 106 L68 104 C70 120 72 138 74 152 C72 166 70 180 70 196 C68 220 68 244 72 262 C70 280 68 300 70 318 ' +
-  'C71 330 72 344 72 356 C68 364 66 372 72 378 L92 378 C94 370 90 362 88 356 C88 340 90 324 90 308 C92 290 92 276 90 262 C94 240 96 214 98 192 L100 186 Z';
+const SKIN: Slug[] = ['head', 'hair', 'hands', 'feet', 'knees', 'ankles'];
 
-type Shape = { muscle: MuscleId; d: string[] };
+/**
+ * The female artwork is drawn with a bodybuilder's frame. Narrow it about the centre line, more at the shoulders
+ * than the hips, for a leaner, more typically female silhouette.
+ */
+const FEMALE_WIDTH: Partial<Record<Slug, number>> = {
+  head: 0.9,
+  hair: 0.9,
+  neck: 0.82,
+  trapezius: 0.8,
+  deltoids: 0.8,
+  chest: 0.82,
+  'upper-back': 0.82,
+  biceps: 0.82,
+  triceps: 0.82,
+  forearm: 0.82,
+  hands: 0.82,
+  abs: 0.86,
+  obliques: 0.86,
+  'lower-back': 0.86,
+  gluteal: 0.92,
+  adductors: 0.9,
+  quadriceps: 0.88,
+  hamstring: 0.88,
+  knees: 0.9,
+  calves: 0.9,
+  tibialis: 0.9,
+  ankles: 0.9,
+  feet: 0.9,
+};
+/** Slugs whose internal separation lines are softened on the female body (no carved eight-pack). */
+const FEMALE_SMOOTH: Slug[] = ['abs', 'obliques', 'chest'];
 
-const FRONT: Shape[] = [
-  { muscle: 'upperBack', d: both('M93 58 C88 63 80 66 70 69 C78 71 86 70 92 68 C95 66 97 63 98 60 Z') },
-  { muscle: 'shoulders', d: both('M66 70 C58 72 51 79 50 90 C50 96 52 100 54 102 C58 96 64 92 70 90 C72 82 72 76 70 70 Z') },
-  { muscle: 'chest', d: both('M98 70 C88 68 78 69 72 72 C70 80 70 88 72 96 C80 102 92 102 98 98 Z') },
-  { muscle: 'biceps', d: both('M54 105 C50 114 48 124 48 132 C52 136 56 134 58 128 C60 120 62 112 62 105 C60 101 56 101 54 105 Z') },
-  { muscle: 'forearms', d: both('M47 139 C44 150 41 162 40 174 C42 178 45 178 47 176 C50 164 53 152 56 141 C54 137 50 136 47 139 Z') },
-  {
-    muscle: 'abs',
-    d: [
-      ...both('M89 104 L98 104 L98 116 L89 116 Z'),
-      ...both('M89 119 L98 119 L98 131 L89 131 Z'),
-      ...both('M89 134 L98 134 L98 146 L89 146 Z'),
-      ...both('M89 149 L98 149 L98 170 C94 168 91 162 89 156 Z'),
-    ],
-  },
-  { muscle: 'obliques', d: both('M86 104 L75 100 C73 116 73 134 76 150 C79 157 83 161 86 162 Z') },
-  { muscle: 'hipFlexors', d: both('M76 160 C80 167 88 174 96 180 L93 190 C86 185 80 179 74 170 Z') },
-  { muscle: 'adductors', d: both('M98 190 L98 230 C94 222 90 210 88 199 L92 193 Z') },
-  { muscle: 'quads', d: both('M72 176 C70 196 70 220 72 246 C76 256 84 258 90 254 C92 236 90 214 87 201 C84 190 78 182 72 176 Z') },
-  { muscle: 'calves', d: both('M72 272 C70 288 70 302 72 318 L76 320 C74 302 74 288 76 272 Z') },
-  { muscle: 'tibialis', d: both('M78 270 C76 288 76 306 78 324 L84 326 C86 308 86 290 84 270 Z') },
-];
+const BASE = '#3A404D';
+const SKIN_FILL = '#262A33';
 
-const BACK: Shape[] = [
-  { muscle: 'lats', d: both('M72 92 C70 108 72 124 78 138 C84 142 92 140 98 134 L98 116 C92 108 84 100 76 92 Z') },
-  { muscle: 'upperBack', d: both('M100 58 C94 60 86 64 74 70 C80 76 88 84 93 96 L100 110 Z') },
-  { muscle: 'shoulders', d: both('M66 70 C58 72 51 79 50 90 C50 96 52 100 54 102 C58 96 64 92 70 90 C72 82 72 76 70 70 Z') },
-  { muscle: 'triceps', d: both('M54 105 C50 114 48 124 48 132 C52 136 56 134 58 128 C60 120 62 112 62 105 C60 101 56 101 54 105 Z') },
-  { muscle: 'forearms', d: both('M47 139 C44 150 41 162 40 174 C42 178 45 178 47 176 C50 164 53 152 56 141 C54 137 50 136 47 139 Z') },
-  { muscle: 'lowerBack', d: both('M88 138 C92 141 96 143 98 143 L98 164 C94 162 90 158 86 154 Z') },
-  { muscle: 'obliques', d: both('M76 140 C76 150 78 158 84 162 L86 154 C82 150 79 146 76 140 Z') },
-  { muscle: 'glutes', d: both('M98 166 C90 164 80 166 74 176 C72 188 76 198 86 202 C92 202 96 200 98 196 Z') },
-  { muscle: 'hamstrings', d: both('M74 205 C72 220 72 238 74 254 C80 260 86 260 90 254 C94 238 96 220 96 207 C90 207 82 207 74 205 Z') },
-  { muscle: 'adductors', d: both('M97 208 L98 208 L98 236 C96 230 95 220 97 208 Z') },
-  { muscle: 'calves', d: both('M72 268 C68 282 68 298 72 312 C76 318 82 316 86 306 C90 292 90 280 86 268 C82 264 76 264 72 268 Z') },
-];
+export const HEAT = ['#2E5590', '#3D8BFF', '#FFB020', '#FF6B4A'] as const;
 
-export const SHAPES: Record<BodyView, Shape[]> = { front: FRONT, back: BACK };
-
-const BASE = '#353B48';
-
-/** Heat ramp: light → blue → amber → hot. */
+/** Heat ramp: rest → light → moderate → high → max. */
 export function heatColor(i: number | undefined): string {
   if (!i || i <= 0.02) return BASE;
-  if (i < 0.25) return '#2E5590';
-  if (i < 0.5) return '#3D8BFF';
-  if (i < 0.8) return '#FFB020';
-  return '#FF6B4A';
+  if (i < 0.25) return HEAT[0];
+  if (i < 0.5) return HEAT[1];
+  if (i < 0.8) return HEAT[2];
+  return HEAT[3];
 }
+
+const SECONDARY = '#2A5A9E';
+
+function shade(hex: string, amt: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const f = (c: number) => Math.max(0, Math.min(255, Math.round(c + (amt > 0 ? (255 - c) * amt : c * amt))));
+  return `#${[f(n >> 16), f((n >> 8) & 255), f(n & 255)].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+}
+
+const GRADIENT_COLORS = [BASE, SKIN_FILL, SECONDARY, colors.primary, ...HEAT];
+
 
 export type BodyMapProps = {
   view: BodyView;
+  sex?: Sex;
   /** 0..1 intensities for heat mode. */
   heat?: MuscleLoad;
   /** Highlight mode: primary muscles full, secondary partial. */
@@ -85,48 +115,67 @@ export type BodyMapProps = {
   width?: number;
 };
 
-export function BodyMap({ view, heat, primary = [], secondary = [], selected, onPressMuscle, width = 160 }: BodyMapProps) {
-  const fill = (m: MuscleId) => {
-    if (heat) return heatColor(heat[m]);
-    if (primary.includes(m)) return colors.primary;
-    if (secondary.includes(m)) return '#2A5A9E';
-    return BASE;
-  };
-  const id = `${view}-${width}`;
+export function BodyMap({ view, sex = 'male', heat, primary = [], secondary = [], selected, onPressMuscle, width = 160 }: BodyMapProps) {
+  // Gradient ids must be unique per instance: on web, url(#id) resolves document-wide, and screens kept
+  // mounted (hidden) in the navigation stack would otherwise capture the reference.
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
+  const gid = (c: string) => `g${uid}${c.slice(1)}`;
+  // Resolve a fill per artwork slug (max intensity when several muscles share one).
+  const slugFill = new Map<Slug, string>();
+  const slugMuscle = new Map<Slug, MuscleId>();
+  for (const [m, slug] of Object.entries(MUSCLE_SLUG) as [MuscleId, Slug | null][]) {
+    if (!slug) continue;
+    let color = BASE;
+    if (heat) {
+      const current = [...Object.entries(MUSCLE_SLUG)].filter(([, s]) => s === slug).map(([mm]) => heat[mm as MuscleId] ?? 0);
+      color = heatColor(Math.max(0, ...current));
+    } else if ([...Object.entries(MUSCLE_SLUG)].some(([mm, s]) => s === slug && primary.includes(mm as MuscleId))) color = colors.primary;
+    else if ([...Object.entries(MUSCLE_SLUG)].some(([mm, s]) => s === slug && secondary.includes(mm as MuscleId))) color = SECONDARY;
+    slugFill.set(slug, color);
+    if (!slugMuscle.has(slug) || m === selected) slugMuscle.set(slug, m);
+  }
+  const selectedSlug = selected ? MUSCLE_SLUG[selected] : null;
+  const viewBox = view === 'front' ? '0 0 724 1448' : '724 0 724 1448';
+  const strokeW = Math.max(1.5, 400 / width);
+
   return (
-    <Svg width={width} height={(width * 400) / 200} viewBox="0 0 200 400">
+    <Svg width={width} height={width * 2} viewBox={viewBox}>
       <Defs>
-        <RadialGradient id={`skin-${id}`} cx="50%" cy="35%" rx="60%" ry="60%">
-          <Stop offset="0" stopColor="#2E3340" />
-          <Stop offset="1" stopColor="#1B1E25" />
-        </RadialGradient>
-        <LinearGradient id={`sheen-${id}`} x1="0" y1="0" x2="1" y2="0.3">
-          <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.12} />
-          <Stop offset="0.5" stopColor="#FFFFFF" stopOpacity={0} />
-          <Stop offset="1" stopColor="#000000" stopOpacity={0.16} />
-        </LinearGradient>
+        {GRADIENT_COLORS.map((c) => (
+          <RadialGradient key={c} id={gid(c)} cx="38%" cy="30%" rx="75%" ry="75%" fx="35%" fy="25%">
+            <Stop offset="0" stopColor={shade(c, 0.28)} />
+            <Stop offset="0.55" stopColor={c} />
+            <Stop offset="1" stopColor={shade(c, -0.45)} />
+          </RadialGradient>
+        ))}
       </Defs>
-      <Ellipse cx={100} cy={34} rx={17} ry={21} fill={`url(#skin-${id})`} />
-      <Path d="M92 52 L92 64 L108 64 L108 52 Z" fill={`url(#skin-${id})`} />
-      <Path d={HALF_SILHOUETTE} fill={`url(#skin-${id})`} />
-      <Path d={mirror(HALF_SILHOUETTE)} fill={`url(#skin-${id})`} />
-      {SHAPES[view].flatMap((s) =>
-        s.d.map((d, i) => (
-          <Path
-            key={`${s.muscle}-${i}`}
-            d={d}
-            fill={fill(s.muscle)}
-            stroke={selected === s.muscle ? '#FFFFFF' : '#0B0C0F'}
-            strokeWidth={selected === s.muscle ? 1.6 : 0.9}
-            strokeLinejoin="round"
-            onPress={onPressMuscle ? () => onPressMuscle(s.muscle) : undefined}
-          />
-        )),
-      )}
-      {/* Volumetric lighting over the whole figure */}
-      <Path d={HALF_SILHOUETTE} fill={`url(#sheen-${id})`} pointerEvents="none" />
-      <Path d={mirror(HALF_SILHOUETTE)} fill={`url(#sheen-${id})`} pointerEvents="none" />
-      <Ellipse cx={100} cy={34} rx={17} ry={21} fill={`url(#sheen-${id})`} pointerEvents="none" />
+      {ASSETS[sex][view].map((part) => {
+        const slug = part.slug as Slug;
+        const isSkin = SKIN.includes(slug);
+        const fill = isSkin ? SKIN_FILL : (slugFill.get(slug) ?? BASE);
+        const muscle = slugMuscle.get(slug);
+        const isSel = !!selectedSlug && selectedSlug === slug;
+        const female = sex === 'female';
+        const sx = female ? (FEMALE_WIDTH[slug] ?? 1) : 1;
+        const cx = view === 'front' ? 362 : 1086;
+        const smooth = female && FEMALE_SMOOTH.includes(slug) && !isSel;
+        const paths = [...(part.path?.common ?? []), ...(part.path?.left ?? []), ...(part.path?.right ?? [])];
+        return (
+          <G key={slug} transform={sx === 1 ? undefined : `translate(${cx} 0) scale(${sx} 1) translate(${-cx} 0)`}>
+            {paths.map((d, i) => (
+              <Path
+                key={i}
+                d={d}
+                fill={smooth ? shade(fill, -0.08) : `url(#${gid(fill)})`}
+                stroke={isSel ? '#FFFFFF' : smooth ? shade(fill, -0.08) : colors.bg}
+                strokeWidth={isSel ? strokeW * 2.2 : female ? strokeW * 0.75 : strokeW}
+                strokeLinejoin="round"
+                onPress={onPressMuscle && muscle && !isSkin ? () => onPressMuscle(muscle) : undefined}
+              />
+            ))}
+          </G>
+        );
+      })}
     </Svg>
   );
 }
@@ -196,10 +245,10 @@ export function RotatingBody(props: Omit<BodyMapProps, 'view'> & { testID?: stri
 export function HeatLegend() {
   const steps = [
     { c: BASE, l: 'Rest' },
-    { c: '#2E5590', l: 'Light' },
-    { c: '#3D8BFF', l: 'Moderate' },
-    { c: '#FFB020', l: 'High' },
-    { c: '#FF6B4A', l: 'Max' },
+    { c: HEAT[0], l: 'Light' },
+    { c: HEAT[1], l: 'Moderate' },
+    { c: HEAT[2], l: 'High' },
+    { c: HEAT[3], l: 'Max' },
   ];
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>

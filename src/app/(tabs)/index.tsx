@@ -25,6 +25,7 @@ import { colors } from '@/lib/theme';
 import { useInvite } from '@/lib/useInvite';
 import { useProgress } from '@/lib/useProgress';
 import { nextBestAction } from '@/lib/nudges';
+import { useBodySex } from '@/lib/useBodySex';
 
 function greeting() {
   const h = new Date().getHours();
@@ -32,6 +33,7 @@ function greeting() {
 }
 
 export default function Home() {
+  const sex = useBodySex();
   const { profile, runs, plan, friends, invitesSent, strength } = useStore();
   const muscles = useWeeklyMuscles();
   const heat = useMemo(() => intensities(muscles.load), [muscles]);
@@ -90,7 +92,7 @@ export default function Home() {
           <Label>Muscles this week</Label>
           <Text style={{ color: colors.primary, fontWeight: '700' }}>Open ›</Text>
         </Row>
-        <BodyPair heat={heat} width={84} />
+        <BodyPair sex={sex} heat={heat} width={84} />
       </Card>
 
       {rank ? (

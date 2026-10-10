@@ -8,6 +8,8 @@ export type MuscleId =
   | 'biceps'
   | 'triceps'
   | 'forearms'
+  | 'traps'
+  | 'neck'
   | 'upperBack'
   | 'lats'
   | 'lowerBack'
@@ -21,18 +23,20 @@ export type MuscleId =
   | 'calves'
   | 'tibialis';
 
-export const MUSCLES: { id: MuscleId; label: string }[] = [
+export const MUSCLES: { id: MuscleId; label: string; deep?: boolean }[] = [
   { id: 'quads', label: 'Quads' },
   { id: 'hamstrings', label: 'Hamstrings' },
   { id: 'glutes', label: 'Glutes' },
   { id: 'calves', label: 'Calves' },
-  { id: 'hipFlexors', label: 'Hip Flexors' },
+  { id: 'hipFlexors', label: 'Hip Flexors', deep: true },
   { id: 'adductors', label: 'Adductors' },
   { id: 'tibialis', label: 'Shins' },
   { id: 'abs', label: 'Abs' },
   { id: 'obliques', label: 'Obliques' },
   { id: 'lowerBack', label: 'Lower Back' },
   { id: 'upperBack', label: 'Upper Back' },
+  { id: 'traps', label: 'Traps' },
+  { id: 'neck', label: 'Neck' },
   { id: 'lats', label: 'Lats' },
   { id: 'chest', label: 'Chest' },
   { id: 'shoulders', label: 'Shoulders' },

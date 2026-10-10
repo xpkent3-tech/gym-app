@@ -51,3 +51,7 @@ The same flows target a native build by swapping `url:` for `appId: app.stride.m
 Notes for writing web flows: Maestro web scrolls the window only, prefers `aria-label` over `testID` when resolving ids, and re-finds focused inputs by XPath. So keep screens short, don't put `accessibilityLabel` on elements that have a `testID`, and give text inputs a `nativeID` (the `Field` component does this).
 
 Lint: `npx expo lint` (must be clean before committing).
+
+## Credits
+
+Anatomy artwork: [react-native-body-highlighter](https://github.com/HichamELBSI/react-native-body-highlighter) (MIT, © ELABBASSI Hicham). Only its path data is used, rendered by `src/components/BodyMap.tsx`.

@@ -8,8 +8,10 @@ import { formatDate } from '@/lib/dates';
 import { balanceInsight, intensities, MUSCLES, type MuscleId } from '@/lib/muscles';
 import { colors } from '@/lib/theme';
 import { useWeeklyMuscles } from '@/lib/useMuscles';
+import { useBodySex } from '@/lib/useBodySex';
 
 export default function BodyScreen() {
+  const sex = useBodySex();
   const router = useRouter();
   const week = useWeeklyMuscles();
   const heat = useMemo(() => intensities(week.load), [week]);
@@ -27,7 +29,7 @@ export default function BodyScreen() {
       <Body>Last 7 days · runs and strength. Tap a muscle to see what worked it.</Body>
 
       <Card style={{ alignItems: 'center', paddingVertical: 20 }}>
-        <RotatingBody heat={heat} selected={selected} onPressMuscle={setSelected} width={200} testID="body-map" />
+        <RotatingBody sex={sex} heat={heat} selected={selected} onPressMuscle={setSelected} width={200} testID="body-map" />
         <HeatLegend />
       </Card>
 
@@ -89,7 +91,7 @@ export default function BodyScreen() {
           <Pressable key={m.id} onPress={() => setSelected(m.id)} testID={`muscle-row-${m.id}`}>
             <Row style={{ gap: 10, paddingVertical: 6 }}>
               <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: heatColor(heat[m.id]) }} />
-              <Text style={{ color: selected === m.id ? colors.primary : colors.text, fontWeight: '700', width: 100 }}>{m.label}</Text>
+              <Text style={{ color: selected === m.id ? colors.primary : colors.text, fontWeight: '700', width: 100 }}>{m.deep ? `${m.label} (deep)` : m.label}</Text>
               <View style={{ flex: 1, height: 6, backgroundColor: colors.surfaceAlt, borderRadius: 3 }}>
                 <View style={{ width: `${(heat[m.id] ?? 0) * 100}%`, height: 6, backgroundColor: heatColor(heat[m.id]), borderRadius: 3 }} />
               </View>

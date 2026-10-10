@@ -7,8 +7,10 @@ import { formatDate } from '@/lib/dates';
 import { exerciseById } from '@/lib/exercises';
 import type { StrengthSession } from '@/lib/muscles';
 import { colors } from '@/lib/theme';
+import { useBodySex } from '@/lib/useBodySex';
 
 export function StrengthCard({ session, index }: { session: StrengthSession; index: number }) {
+  const sex = useBodySex();
   const router = useRouter();
   const exs = session.exercises.map((e) => ({ ex: exerciseById(e.exerciseId), sets: e.sets }));
   const primary = [...new Set(exs.flatMap((e) => e.ex?.primary ?? []))];
@@ -34,8 +36,8 @@ export function StrengthCard({ session, index }: { session: StrengthSession; ind
             {totalSets} sets{volume ? ` · ${Math.round(volume)} kg volume` : ''}
           </Text>
         </View>
-        <BodyMap view="back" primary={primary} width={44} />
-        <BodyMap view="front" primary={primary} width={44} />
+        <BodyMap sex={sex} view="back" primary={primary} width={44} />
+        <BodyMap sex={sex} view="front" primary={primary} width={44} />
       </Row>
     </Card>
   );
