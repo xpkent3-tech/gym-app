@@ -1,0 +1,129 @@
+url: ${APP_URL || 'http://localhost:8081'}
+name: Live logger, set types, rest timer, routines, PRs, charts, custom exercise
+tags: [core, strength]
+---
+- runFlow: subflows/onboard.yaml
+- tapOn:
+    id: tab-log
+- tapOn:
+    id: hub-strength
+- tapOn:
+    id: workouts-start-empty
+- tapOn:
+    id: picker-search
+- inputText: "back squat"
+- tapOn:
+    id: picker-add-0
+- tapOn:
+    id: picker-close
+- assertVisible:
+    id: strength-ex-0
+- assertVisible:
+    id: ex-0-rest-label
+    text: ".*Rest Timer: 1min 30s"
+- tapOn:
+    id: ex-0-note
+- inputText: "Felt strong"
+# Warm-up set is excluded from volume
+- tapOn:
+    id: set-0-0-type
+- tapOn:
+    id: settype-warmup
+- assertVisible:
+    id: set-0-0-label
+    text: "W"
+- tapOn:
+    id: set-0-0-kg
+- inputText: "40"
+- tapOn:
+    id: set-0-0-reps
+- inputText: "8"
+- tapOn:
+    id: set-0-0-done
+- assertVisible:
+    id: stat-volume
+    text: "0 kg"
+# Working set starts the rest timer and counts volume
+- tapOn:
+    id: set-0-1-kg
+- inputText: "100"
+- tapOn:
+    id: set-0-1-reps
+- inputText: "5"
+- tapOn:
+    id: set-0-1-done
+- assertVisible:
+    id: rest-bar
+- assertVisible:
+    id: rest-time
+    text: "[01]:[0-9]{2}"
+- assertVisible:
+    id: stat-volume
+    text: "500 kg"
+- assertVisible:
+    id: stat-sets
+    text: "1"
+- tapOn:
+    id: rest-skip
+- assertNotVisible:
+    id: rest-bar
+- tapOn:
+    id: strength-finish
+- assertVisible:
+    id: workout-celebration
+- assertVisible:
+    id: workout-volume
+    text: "500 kg"
+- tapOn:
+    id: workout-save-routine
+- tapOn:
+    id: workout-back
+# Start the saved routine: PREVIOUS shows last time, tapping fills it
+- assertVisible:
+    id: routine-0
+- tapOn:
+    id: routine-start-0
+- assertVisible: "40kg . 8"
+- assertVisible: "100kg . 5"
+- tapOn:
+    id: set-0-0-prev
+- assertVisible:
+    id: set-0-0-kg
+    text: "40"
+- tapOn:
+    id: set-0-1-kg
+- inputText: "110"
+- tapOn:
+    id: set-0-1-done
+- assertVisible:
+    id: toast
+    text: "New PR.*"
+- tapOn:
+    id: strength-finish
+- assertVisible:
+    id: workout-prs
+- assertVisible:
+    id: workout-xp
+    text: "\\+125 XP.*"
+# Exercise progress: chart, records, history
+- tapOn:
+    id: workout-ex-link-0
+- assertVisible:
+    id: exercise-chart-latest
+    text: "110kg"
+- assertVisible:
+    id: pr-heaviest
+    text: "110kg"
+- tapOn:
+    id: metric-oneRepMax
+- assertVisible:
+    id: exercise-chart-latest
+    text: "128.3kg"
+- tapOn:
+    id: exercise-tab-history
+- assertVisible:
+    id: exercise-history-0
+- tapOn:
+    id: exercise-tab-howto
+- assertVisible:
+    id: exercise-primary-quads

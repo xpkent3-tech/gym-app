@@ -22,7 +22,7 @@ export default function LogRun() {
   const ordered = [...SPORTS].sort((a, b) => Number(mySports.includes(b.id)) - Number(mySports.includes(a.id)));
   const pick = (id: SportId) => {
     if (id === 'running') setShowRun(true);
-    else if (id === 'strength') router.replace('/strength');
+    else if (id === 'strength') router.replace('/workouts');
     else router.replace({ pathname: '/sport/[sport]', params: { sport: id } });
   };
   const [type, setType] = useState<RunType>(params.type ?? 'easy');

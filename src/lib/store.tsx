@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from 'react';
 
 import { runnerById, userFriendCode } from './community';
+import { setCustomExercises, type Exercise } from './exercises';
 import type { StrengthSession } from './muscles';
 import { latestEntry, type BodyEntry } from './bodycomp';
 import type { HealthSnapshot } from './health';
@@ -12,7 +13,16 @@ import type { BodyStyle, Profile, Run } from './types';
 
 const STORAGE_KEY = 'stride:v1';
 
+export interface Routine {
+  id: string;
+  name: string;
+  createdAt: number;
+  exercises: { exerciseId: string; sets: number; restSec?: number }[];
+}
+
 export interface AppData {
+  routines: Routine[];
+  customExercises: Exercise[];
   profile: Profile | null;
   runs: Run[];
   /** Runner ids from the community directory. */
@@ -40,6 +50,10 @@ type Action =
   | { type: 'toggleKudos'; id: string }
   | { type: 'setPendingInvite'; id: string | null }
   | { type: 'inviteSent' }
+  | { type: 'addRoutine'; routine: Routine }
+  | { type: 'deleteRoutine'; id: string }
+  | { type: 'addCustomExercise'; exercise: Exercise }
+  | { type: 'deleteCustomExercise'; id: string }
   | { type: 'addStrength'; session: StrengthSession }
   | { type: 'deleteStrength'; id: string }
   | { type: 'addSession'; session: SportSession }
@@ -64,6 +78,8 @@ export const EMPTY: AppData = {
   pendingInvite: null,
   invitesSent: 0,
   strength: [],
+  routines: [],
+  customExercises: [],
   sessions: [],
   food: [],
   bodyLog: [],
@@ -92,6 +108,8 @@ export function migrate(raw: Partial<AppData>): AppData {
     runs: sortRuns(data.runs ?? []),
     friends: (data.friends ?? []).filter((id) => !!runnerById(id)),
     strength: data.strength ?? [],
+    routines: data.routines ?? [],
+    customExercises: data.customExercises ?? [],
     sessions: data.sessions ?? [],
     food: data.food ?? [],
     bodyLog: data.bodyLog ?? [],
@@ -125,6 +143,14 @@ export function reducer(state: State, action: Action): State {
       return { ...state, kudos: state.kudos.includes(action.id) ? state.kudos.filter((k) => k !== action.id) : [...state.kudos, action.id] };
     case 'setPendingInvite':
       return { ...state, pendingInvite: action.id };
+    case 'addRoutine':
+      return { ...state, routines: [action.routine, ...state.routines] };
+    case 'deleteRoutine':
+      return { ...state, routines: state.routines.filter((r) => r.id !== action.id) };
+    case 'addCustomExercise':
+      return { ...state, customExercises: [...state.customExercises, action.exercise] };
+    case 'deleteCustomExercise':
+      return { ...state, customExercises: state.customExercises.filter((e) => e.id !== action.id) };
     case 'addStrength':
       return { ...state, strength: [action.session, ...state.strength] };
     case 'deleteStrength':
@@ -177,6 +203,10 @@ interface Store extends State {
   toggleKudos: (id: string) => void;
   setPendingInvite: (id: string | null) => void;
   inviteSent: () => void;
+  addRoutine: (r: Routine) => void;
+  deleteRoutine: (id: string) => void;
+  addCustomExercise: (e: Exercise) => void;
+  deleteCustomExercise: (id: string) => void;
   addStrength: (s: StrengthSession) => void;
   deleteStrength: (id: string) => void;
   addSession: (s: SportSession) => void;
@@ -211,6 +241,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data)).catch(() => {});
   }, [state]);
 
+  // Idempotent: keeps exerciseById() aware of the user's custom exercises.
+  setCustomExercises(state.customExercises);
+
   const plan = useMemo(() => (state.profile ? generatePlan(state.profile) : []), [state.profile]);
 
   const actions = useMemo(
@@ -223,6 +256,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       toggleKudos: (id: string) => dispatch({ type: 'toggleKudos', id }),
       setPendingInvite: (id: string | null) => dispatch({ type: 'setPendingInvite', id }),
       inviteSent: () => dispatch({ type: 'inviteSent' }),
+      addRoutine: (routine: Routine) => dispatch({ type: 'addRoutine', routine }),
+      deleteRoutine: (id: string) => dispatch({ type: 'deleteRoutine', id }),
+      addCustomExercise: (exercise: Exercise) => dispatch({ type: 'addCustomExercise', exercise }),
+      deleteCustomExercise: (id: string) => dispatch({ type: 'deleteCustomExercise', id }),
       addStrength: (session: StrengthSession) => dispatch({ type: 'addStrength', session }),
       deleteStrength: (id: string) => dispatch({ type: 'deleteStrength', id }),
       addSession: (session: SportSession) => dispatch({ type: 'addSession', session }),

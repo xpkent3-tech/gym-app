@@ -6,6 +6,7 @@ import { Card, Row } from '@/components/ui';
 import { formatDate } from '@/lib/dates';
 import { exerciseById } from '@/lib/exercises';
 import type { StrengthSession } from '@/lib/muscles';
+import { sessionStats } from '@/lib/strength';
 import { colors } from '@/lib/theme';
 import { useBodySex } from '@/lib/useBodySex';
 
@@ -14,10 +15,9 @@ export function StrengthCard({ session, index }: { session: StrengthSession; ind
   const router = useRouter();
   const exs = session.exercises.map((e) => ({ ex: exerciseById(e.exerciseId), sets: e.sets }));
   const primary = [...new Set(exs.flatMap((e) => e.ex?.primary ?? []))];
-  const totalSets = exs.reduce((s, e) => s + e.sets.length, 0);
-  const volume = exs.reduce((s, e) => s + e.sets.reduce((v, x) => v + (x.kg ?? 0) * x.reps, 0), 0);
+  const { sets: totalSets, volume } = sessionStats(session);
   return (
-    <Card onPress={() => router.push('/body')} testID={`strength-card-${index}`}>
+    <Card onPress={() => router.push({ pathname: '/workout/[id]', params: { id: session.id } })} testID={`strength-card-${index}`}>
       <Row style={{ justifyContent: 'space-between' }}>
         <Row style={{ gap: 10 }}>
           <Text style={{ fontSize: 16 }}>🏋️</Text>
@@ -29,7 +29,7 @@ export function StrengthCard({ session, index }: { session: StrengthSession; ind
         <View style={{ flex: 1, gap: 3 }}>
           {exs.map(({ ex, sets }) => (
             <Text key={ex?.id} style={{ color: colors.textDim }}>
-              {sets.length} × {ex?.name}
+              {sets.filter((x) => x.reps > 0).length} × {ex?.name}
             </Text>
           ))}
           <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4 }}>

@@ -1,13 +1,18 @@
 import type { MuscleId } from './muscles';
 
+export const EQUIPMENT = ['Bodyweight', 'Barbell', 'Dumbbell', 'Machine', 'Cable', 'Box', 'Band', 'Other'] as const;
+export type Equipment = (typeof EQUIPMENT)[number];
+
 export interface Exercise {
   id: string;
   name: string;
-  equipment: 'Bodyweight' | 'Barbell' | 'Dumbbell' | 'Machine' | 'Box' | 'Band';
+  equipment: Equipment;
   primary: MuscleId[];
   secondary: MuscleId[];
   cues: string[];
   why: string;
+  /** User-created exercise. */
+  custom?: boolean;
 }
 
 export const EXERCISES: Exercise[] = [
@@ -193,11 +198,20 @@ export const EXERCISES: Exercise[] = [
   },
 ];
 
+let customList: Exercise[] = [];
+
+/** Mirrors the user's custom exercises so lookups work everywhere without the store. */
+export function setCustomExercises(list: Exercise[]) {
+  customList = list;
+}
+
+export const allExercises = (): Exercise[] => [...EXERCISES, ...customList];
+
 export function exerciseById(id: string): Exercise | undefined {
-  return EXERCISES.find((e) => e.id === id);
+  return EXERCISES.find((e) => e.id === id) ?? customList.find((e) => e.id === id);
 }
 
 export function searchExercises(query: string, muscle: MuscleId | null): Exercise[] {
   const q = query.trim().toLowerCase();
-  return EXERCISES.filter((e) => (!q || e.name.toLowerCase().includes(q)) && (!muscle || e.primary.includes(muscle) || e.secondary.includes(muscle)));
+  return allExercises().filter((e) => (!q || e.name.toLowerCase().includes(q)) && (!muscle || e.primary.includes(muscle) || e.secondary.includes(muscle)));
 }

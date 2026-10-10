@@ -180,7 +180,7 @@ export default function Plan() {
         <Card testID="plan-sport-strength" style={{ borderLeftWidth: 3, borderLeftColor: sportMeta('strength').color }}>
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>🏋️ Strength · this week</Text>
           <Body>Two 40-minute sessions. Start from what your muscle map says you’ve neglected.</Body>
-          <Button title="Start strength workout" variant="secondary" onPress={() => router.push('/body')} testID="plan-strength" />
+          <Button title="Start strength workout" variant="secondary" onPress={() => router.push('/workouts')} testID="plan-strength" />
         </Card>
       ) : null}
     </Screen>

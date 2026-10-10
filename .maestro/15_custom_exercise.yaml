@@ -1,0 +1,66 @@
+url: ${APP_URL || 'http://localhost:8081'}
+name: Create a custom exercise, routine editor, then log it
+tags: [core, strength]
+---
+- runFlow: subflows/onboard.yaml
+- tapOn:
+    id: tab-log
+- tapOn:
+    id: hub-strength
+- tapOn:
+    id: workouts-exercises
+- tapOn:
+    id: picker-create
+- tapOn:
+    id: custom-name
+- inputText: "Sled Push"
+- tapOn:
+    id: custom-primary-quads
+- tapOn:
+    id: custom-save
+- tapOn:
+    id: picker-search
+- inputText: "sled"
+- assertVisible:
+    id: picker-info-.*
+- assertVisible: "Sled Push"
+- tapOn:
+    id: picker-close
+# Routine editor with the custom exercise
+- tapOn:
+    id: workouts-new-routine
+- tapOn:
+    id: routine-name
+- inputText: "Sled day"
+- tapOn:
+    id: routine-add-exercise
+- tapOn:
+    id: picker-search
+- inputText: "sled"
+- tapOn:
+    id: picker-add-0
+- tapOn:
+    id: picker-close
+- tapOn:
+    id: routine-ex-0-plus
+- assertVisible:
+    id: routine-ex-0-sets
+    text: "4 sets"
+- tapOn:
+    id: routine-save
+- assertVisible:
+    id: routine-0
+- tapOn:
+    id: routine-start-0
+- assertVisible:
+    id: strength-ex-0
+- assertVisible: "Quads"
+- tapOn:
+    id: set-0-0-reps
+- inputText: "12"
+- tapOn:
+    id: set-0-0-done
+- tapOn:
+    id: strength-finish
+- assertVisible:
+    id: workout-celebration

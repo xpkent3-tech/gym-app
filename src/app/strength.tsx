@@ -2,99 +2,67 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { BodyMap, BodyPair, type BodyView } from '@/components/BodyMap';
-import { Field } from '@/components/Field';
+import { BodyPair } from '@/components/BodyMap';
+import { ExercisePicker } from '@/components/ExercisePicker';
+import { RestBar } from '@/components/RestBar';
 import { useToast } from '@/components/Toast';
-import { Body, Button, Card, Chip, H1, Label, Row, Screen } from '@/components/ui';
+import { Body, Button, Card, Label, Row, Screen } from '@/components/ui';
 import { todayISO } from '@/lib/dates';
-import { exerciseById, searchExercises, type Exercise } from '@/lib/exercises';
+import { exerciseById } from '@/lib/exercises';
 import { uid } from '@/lib/id';
-import { muscleLabel, type MuscleId } from '@/lib/muscles';
+import { muscleLabel, type SetType } from '@/lib/muscles';
 import { formatDuration } from '@/lib/pace';
-import { XP } from '@/lib/progression';
+import { entryPrs, exerciseHistory, formatSet, SET_TYPES } from '@/lib/strength';
 import { useStore } from '@/lib/store';
-import { useBodySex } from '@/lib/useBodySex';
 import { colors, radius } from '@/lib/theme';
+import { useBodySex } from '@/lib/useBodySex';
 
 interface DraftSet {
   kg: string;
   reps: string;
+  type: SetType;
+  done: boolean;
 }
 interface DraftExercise {
   exerciseId: string;
   sets: DraftSet[];
+  note: string;
+  restSec: number;
 }
 
-const BACK_MUSCLES: MuscleId[] = ['glutes', 'hamstrings', 'lats', 'upperBack', 'lowerBack', 'triceps', 'calves'];
-const thumbView = (e: Exercise): BodyView => (e.primary.some((m) => BACK_MUSCLES.includes(m)) ? 'back' : 'front');
-const FILTERS: MuscleId[] = ['glutes', 'hamstrings', 'quads', 'calves', 'abs', 'obliques', 'hipFlexors', 'adductors', 'tibialis', 'upperBack', 'chest'];
-const emptySets = (): DraftSet[] => [0, 1, 2].map(() => ({ kg: '', reps: '' }));
-
-function ExercisePicker({ onPick, onClose, already }: { onPick: (e: Exercise) => void; onClose: () => void; already: string[] }) {
-  const sex = useBodySex();
-  const router = useRouter();
-  const [query, setQuery] = useState('');
-  const [muscle, setMuscle] = useState<MuscleId | null>(null);
-  const list = searchExercises(query, muscle);
-  return (
-    <View style={{ gap: 12 }} testID="picker">
-      <Row style={{ justifyContent: 'space-between' }}>
-        <H1>Add exercise</H1>
-        <Pressable onPress={onClose} hitSlop={10} testID="picker-close">
-          <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 16 }}>Done</Text>
-        </Pressable>
-      </Row>
-      <Field label="Search" value={query} onChangeText={setQuery} placeholder="e.g. squat" testID="picker-search" autoCapitalize="none" />
-      <Row style={{ gap: 6, flexWrap: 'wrap' }}>
-        <Chip label="All muscles" selected={!muscle} onPress={() => setMuscle(null)} testID="filter-all" />
-        {FILTERS.map((m) => (
-          <Chip key={m} label={muscleLabel(m)} selected={muscle === m} onPress={() => setMuscle(muscle === m ? null : m)} testID={`filter-${m}`} />
-        ))}
-      </Row>
-      {list.length === 0 ? <Body>No exercises match.</Body> : null}
-      {list.map((e, i) => {
-        const added = already.includes(e.id);
-        return (
-          <Card key={e.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 }}>
-            <View style={{ backgroundColor: colors.bg, borderRadius: 10 }}>
-              <BodyMap sex={sex} view={thumbView(e)} primary={e.primary} secondary={e.secondary} width={40} />
-            </View>
-            <Pressable style={{ flex: 1 }} onPress={() => router.push(`/exercise/${e.id}`)} testID={`picker-info-${e.id}`}>
-              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>{e.name}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>
-                {e.primary.map(muscleLabel).join(', ')} · {e.equipment}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => onPick(e)}
-              disabled={added}
-              testID={`picker-add-${i}`}
-              style={{ backgroundColor: added ? colors.surfaceAlt : colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 }}
-            >
-              <Text style={{ color: added ? colors.textMuted : '#fff', fontWeight: '800' }}>{added ? 'Added' : 'Add'}</Text>
-            </Pressable>
-          </Card>
-        );
-      })}
-    </View>
-  );
-}
+const clock = () => Date.now();
+const DEFAULT_REST = 90;
+const REST_OPTIONS = [0, 30, 60, 90, 120, 180, 300];
+const restLabel = (s: number) => (s === 0 ? 'Off' : s % 60 === 0 ? `${s / 60}min` : s > 60 ? `${Math.floor(s / 60)}min ${s % 60}s` : `${s}s`);
+const blankSet = (): DraftSet => ({ kg: '', reps: '', type: 'normal', done: false });
+const newExercise = (exerciseId: string, sets = 3, restSec = DEFAULT_REST): DraftExercise => ({
+  exerciseId,
+  sets: Array.from({ length: sets }, blankSet),
+  note: '',
+  restSec,
+});
+const badge = (type: SetType) => SET_TYPES.find((t) => t.id === type)!.badge;
+const badgeColor = (type: SetType) => ({ normal: colors.textDim, warmup: colors.warning, drop: '#B77CFF', failure: colors.danger })[type];
 
 export default function StrengthWorkout() {
   const sex = useBodySex();
-  const params = useLocalSearchParams<{ add?: string }>();
+  const params = useLocalSearchParams<{ add?: string; routine?: string }>();
   const router = useRouter();
   const toast = useToast();
-  const { addStrength } = useStore();
-  const [items, setItems] = useState<DraftExercise[]>(() =>
-    (params.add ?? '')
+  const { addStrength, strength, routines } = useStore();
+  const [items, setItems] = useState<DraftExercise[]>(() => {
+    const routine = routines.find((r) => r.id === params.routine);
+    if (routine) return routine.exercises.filter((e) => exerciseById(e.exerciseId)).map((e) => newExercise(e.exerciseId, e.sets, e.restSec ?? DEFAULT_REST));
+    return (params.add ?? '')
       .split(',')
       .filter((id) => exerciseById(id))
-      .map((exerciseId) => ({ exerciseId, sets: emptySets() })),
-  );
+      .map((id) => newExercise(id));
+  });
   const [picking, setPicking] = useState(items.length === 0);
+  const [typeMenu, setTypeMenu] = useState<string | null>(null);
   const [startedAt] = useState(() => Date.now());
   const [now, setNow] = useState(() => Date.now());
+  const [rest, setRest] = useState<{ end: number; total: number } | null>(null);
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
@@ -103,25 +71,57 @@ export default function StrengthWorkout() {
   const exercises = items.map((i) => exerciseById(i.exerciseId)!);
   const primary = useMemo(() => [...new Set(exercises.flatMap((e) => e.primary))], [exercises]);
   const secondary = useMemo(() => [...new Set(exercises.flatMap((e) => e.secondary))].filter((m) => !primary.includes(m)), [exercises, primary]);
-  const doneSets = items.reduce((s, i) => s + i.sets.filter((x) => Number(x.reps) > 0).length, 0);
+  const doneSets = items.flatMap((i) => i.sets.filter((s) => s.done && Number(s.reps) > 0));
+  const working = doneSets.filter((s) => s.type !== 'warmup');
+  const volume = working.reduce((v, s) => v + (Number(s.kg.replace(',', '.')) || 0) * Number(s.reps), 0);
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
+  const remaining = rest ? Math.max(0, Math.ceil((rest.end - now) / 1000)) : 0;
 
+  const patchExercise = (ei: number, patch: Partial<DraftExercise>) => setItems((l) => l.map((x, i) => (i === ei ? { ...x, ...patch } : x)));
   const updateSet = (ei: number, si: number, patch: Partial<DraftSet>) =>
     setItems((list) => list.map((it, i) => (i !== ei ? it : { ...it, sets: it.sets.map((s, j) => (j === si ? { ...s, ...patch } : s)) })));
+
+  const toggleDone = (ei: number, si: number) => {
+    const it = items[ei];
+    const s = it.sets[si];
+    if (s.done) return updateSet(ei, si, { done: false });
+    const prevSet = previousFor(ei)[si];
+    const kg = s.kg || (prevSet?.kg ? String(prevSet.kg) : '');
+    const reps = s.reps || (prevSet ? String(prevSet.reps) : '10');
+    updateSet(ei, si, { kg, reps, done: true });
+    // Live PR toast, compared with every saved session.
+    const hist = exerciseHistory(strength, it.exerciseId);
+    const kgN = Number(kg.replace(',', '.')) || null;
+    if (s.type !== 'warmup' && entryPrs({ exerciseId: it.exerciseId, sets: [{ kg: kgN, reps: Number(reps) }] }, hist).length) {
+      toast(`New PR 🏆 ${exerciseById(it.exerciseId)?.name}`);
+    }
+    if (it.restSec > 0) setRest({ end: clock() + it.restSec * 1000, total: it.restSec });
+  };
+
+  const previousFor = (ei: number) => {
+    const h = exerciseHistory(strength, items[ei].exerciseId);
+    return h.length ? h[h.length - 1].entry.sets.filter((x) => x.reps > 0) : [];
+  };
 
   const finish = () => {
     const exercisesOut = items
       .map((it) => ({
         exerciseId: it.exerciseId,
+        restSec: it.restSec,
+        ...(it.note.trim() ? { note: it.note.trim() } : {}),
         sets: it.sets
-          .filter((s) => Number(s.reps) > 0)
-          .map((s) => ({ reps: Math.round(Number(s.reps)), kg: s.kg ? Number(s.kg.replace(',', '.')) || null : null })),
+          .filter((s) => s.done && Number(s.reps) > 0)
+          .map((s) => ({
+            reps: Math.round(Number(s.reps)),
+            kg: s.kg ? Number(s.kg.replace(',', '.')) || null : null,
+            ...(s.type !== 'normal' ? { type: s.type } : {}),
+          })),
       }))
       .filter((e) => e.sets.length);
     if (!exercisesOut.length) return;
-    addStrength({ id: uid(), date: todayISO(), createdAt: Date.now(), exercises: exercisesOut });
-    toast(`Workout saved · +${XP.strength} XP 💪`);
-    router.replace('/body');
+    const id = uid();
+    addStrength({ id, date: todayISO(), createdAt: Date.now(), durationSec: Math.floor((Date.now() - startedAt) / 1000), exercises: exercisesOut });
+    router.replace({ pathname: '/workout/[id]', params: { id, fresh: '1' } });
   };
 
   if (picking) {
@@ -129,7 +129,7 @@ export default function StrengthWorkout() {
       <Screen testID="strength-screen">
         <ExercisePicker
           already={items.map((i) => i.exerciseId)}
-          onPick={(e) => setItems((l) => [...l, { exerciseId: e.id, sets: emptySets() }])}
+          onPick={(e) => setItems((l) => [...l, newExercise(e.id)])}
           onClose={() => (items.length ? setPicking(false) : close())}
         />
       </Screen>
@@ -142,11 +142,35 @@ export default function StrengthWorkout() {
         <Pressable onPress={close} hitSlop={12} testID="strength-cancel">
           <Text style={{ color: colors.textDim, fontSize: 16 }}>Cancel</Text>
         </Pressable>
-        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>Strength · {formatDuration(Math.floor((now - startedAt) / 1000))}</Text>
-        <Pressable onPress={finish} disabled={!doneSets} hitSlop={12} testID="strength-finish-top">
-          <Text style={{ color: doneSets ? colors.primary : colors.textMuted, fontWeight: '800', fontSize: 16 }}>Finish</Text>
+        <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>Log workout</Text>
+        <Pressable onPress={finish} disabled={!doneSets.length} hitSlop={12} testID="strength-finish-top">
+          <Text style={{ color: doneSets.length ? colors.primary : colors.textMuted, fontWeight: '800', fontSize: 16 }}>Finish</Text>
         </Pressable>
       </Row>
+
+      <Row style={{ gap: 8 }}>
+        {[
+          ['Time', formatDuration(Math.floor((now - startedAt) / 1000)), 'stat-time'],
+          ['Volume', `${Math.round(volume)} kg`, 'stat-volume'],
+          ['Sets', String(working.length), 'stat-sets'],
+        ].map(([label, value, id]) => (
+          <View key={id} style={st.stat}>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700' }}>{label}</Text>
+            <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }} testID={id}>
+              {value}
+            </Text>
+          </View>
+        ))}
+      </Row>
+
+      {rest ? (
+        <RestBar
+          remaining={remaining}
+          total={rest.total}
+          onAdjust={(d) => setRest({ end: rest.end + d * 1000, total: Math.max(1, rest.total + d) })}
+          onSkip={() => setRest(null)}
+        />
+      ) : null}
 
       <Card style={{ paddingVertical: 14 }} testID="strength-preview">
         <Label>This workout targets</Label>
@@ -156,6 +180,8 @@ export default function StrengthWorkout() {
 
       {items.map((it, ei) => {
         const ex = exerciseById(it.exerciseId)!;
+        const prev = previousFor(ei);
+        let normalIdx = 0;
         return (
           <Card key={it.exerciseId} testID={`strength-ex-${ei}`}>
             <Row style={{ justifyContent: 'space-between' }}>
@@ -167,64 +193,119 @@ export default function StrengthWorkout() {
                 <Text style={{ color: colors.danger, fontWeight: '700' }}>Remove</Text>
               </Pressable>
             </Row>
+            <TextInput
+              value={it.note}
+              onChangeText={(note) => patchExercise(ei, { note })}
+              placeholder="Add notes here..."
+              placeholderTextColor={colors.textMuted}
+              style={st.note}
+              testID={`ex-${ei}-note`}
+              nativeID={`ex-${ei}-note`}
+            />
+            <Pressable
+              onPress={() => patchExercise(ei, { restSec: REST_OPTIONS[(REST_OPTIONS.indexOf(it.restSec) + 1) % REST_OPTIONS.length] })}
+              testID={`ex-${ei}-rest`}
+              hitSlop={6}
+            >
+              <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }} testID={`ex-${ei}-rest-label`}>
+                ⏱ Rest Timer: {restLabel(it.restSec)}
+              </Text>
+            </Pressable>
             <Row style={{ gap: 8 }}>
               <Text style={[st.head, { width: 34 }]}>SET</Text>
+              <Text style={[st.head, { flex: 1.3 }]}>PREVIOUS</Text>
               <Text style={[st.head, { flex: 1 }]}>KG</Text>
               <Text style={[st.head, { flex: 1 }]}>REPS</Text>
               <Text style={[st.head, { width: 28 }]}> </Text>
             </Row>
             {it.sets.map((s, si) => {
-              const done = Number(s.reps) > 0;
+              const label = s.type === 'normal' ? String(++normalIdx) : badge(s.type);
+              const p = prev[si];
+              const menuKey = `${ei}-${si}`;
               return (
-                <Row key={si} style={{ gap: 8, backgroundColor: done ? colors.success + '14' : 'transparent', borderRadius: 8, paddingVertical: 2 }}>
-                  <Text style={{ color: colors.textDim, width: 34, fontWeight: '800', textAlign: 'center' }}>{si + 1}</Text>
-                  <TextInput
-                    value={s.kg}
-                    onChangeText={(kg) => updateSet(ei, si, { kg })}
-                    placeholder="—"
-                    placeholderTextColor={colors.textMuted}
-                    keyboardType="decimal-pad"
-                    style={st.cell}
-                    testID={`set-${ei}-${si}-kg`}
-                    nativeID={`set-${ei}-${si}-kg`}
-                  />
-                  <TextInput
-                    value={s.reps}
-                    onChangeText={(reps) => updateSet(ei, si, { reps: reps.replace(/[^0-9]/g, '') })}
-                    placeholder="10"
-                    placeholderTextColor={colors.textMuted}
-                    keyboardType="number-pad"
-                    style={st.cell}
-                    testID={`set-${ei}-${si}-reps`}
-                    nativeID={`set-${ei}-${si}-reps`}
-                  />
-                  <Pressable
-                    hitSlop={8}
-                    onPress={() => (done ? updateSet(ei, si, { reps: '' }) : updateSet(ei, si, { reps: s.reps || '10' }))}
-                    testID={`set-${ei}-${si}-done`}
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 8,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: done ? colors.success : colors.surfaceAlt,
-                    }}
-                  >
-                    <Text style={{ color: done ? '#0B0C0F' : colors.textMuted, fontWeight: '900' }}>✓</Text>
-                  </Pressable>
-                </Row>
+                <View key={si} style={{ gap: 6 }}>
+                  <Row style={{ gap: 8, backgroundColor: s.done ? colors.success + '22' : 'transparent', borderRadius: 8, paddingVertical: 2 }}>
+                    <Pressable
+                      onPress={() => setTypeMenu(typeMenu === menuKey ? null : menuKey)}
+                      style={{ width: 34, alignItems: 'center' }}
+                      testID={`set-${ei}-${si}-type`}
+                      hitSlop={6}
+                    >
+                      <Text style={{ color: badgeColor(s.type), fontWeight: '900' }} testID={`set-${ei}-${si}-label`}>
+                        {label}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={{ flex: 1.3, alignItems: 'center' }}
+                      disabled={!p}
+                      onPress={() => p && updateSet(ei, si, { kg: p.kg ? String(p.kg) : '', reps: String(p.reps) })}
+                      testID={`set-${ei}-${si}-prev`}
+                    >
+                      <Text style={{ color: colors.textMuted, fontSize: 13 }}>{p ? formatSet(p) : '—'}</Text>
+                    </Pressable>
+                    <TextInput
+                      value={s.kg}
+                      onChangeText={(kg) => updateSet(ei, si, { kg })}
+                      placeholder={p?.kg ? String(p.kg) : '—'}
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="decimal-pad"
+                      style={st.cell}
+                      testID={`set-${ei}-${si}-kg`}
+                      nativeID={`set-${ei}-${si}-kg`}
+                    />
+                    <TextInput
+                      value={s.reps}
+                      onChangeText={(reps) => updateSet(ei, si, { reps: reps.replace(/[^0-9]/g, '') })}
+                      placeholder={p ? String(p.reps) : '10'}
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="number-pad"
+                      style={st.cell}
+                      testID={`set-${ei}-${si}-reps`}
+                      nativeID={`set-${ei}-${si}-reps`}
+                    />
+                    <Pressable
+                      hitSlop={8}
+                      onPress={() => toggleDone(ei, si)}
+                      testID={`set-${ei}-${si}-done`}
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 8,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: s.done ? colors.success : colors.surfaceAlt,
+                      }}
+                    >
+                      <Text style={{ color: s.done ? '#0B0C0F' : colors.textMuted, fontWeight: '900' }}>✓</Text>
+                    </Pressable>
+                  </Row>
+                  {typeMenu === menuKey ? (
+                    <Row style={{ gap: 6, flexWrap: 'wrap' }}>
+                      {SET_TYPES.map((t) => (
+                        <Pressable
+                          key={t.id}
+                          testID={`settype-${t.id}`}
+                          onPress={() => {
+                            updateSet(ei, si, { type: t.id });
+                            setTypeMenu(null);
+                          }}
+                          style={[st.typeChip, s.type === t.id && { borderColor: colors.primary, backgroundColor: colors.primary + '22' }]}
+                        >
+                          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 13 }}>{t.badge ? `${t.badge} · ${t.label}` : t.label}</Text>
+                        </Pressable>
+                      ))}
+                    </Row>
+                  ) : null}
+                </View>
               );
             })}
             <Row style={{ gap: 8 }}>
               <Button
-                title="+ Add set"
+                title="+ Add Set"
                 variant="secondary"
                 style={{ flex: 1, minHeight: 40 }}
                 testID={`strength-add-set-${ei}`}
-                onPress={() =>
-                  setItems((l) => l.map((x, i) => (i === ei ? { ...x, sets: [...x.sets, { ...(x.sets[x.sets.length - 1] ?? { kg: '', reps: '' }) }] } : x)))
-                }
+                onPress={() => patchExercise(ei, { sets: [...it.sets, { ...blankSet(), type: 'normal' }] })}
               />
               {it.sets.length > 1 ? (
                 <Button
@@ -232,7 +313,7 @@ export default function StrengthWorkout() {
                   variant="ghost"
                   style={{ minHeight: 40 }}
                   testID={`strength-remove-set-${ei}`}
-                  onPress={() => setItems((l) => l.map((x, i) => (i === ei ? { ...x, sets: x.sets.slice(0, -1) } : x)))}
+                  onPress={() => patchExercise(ei, { sets: it.sets.slice(0, -1) })}
                 />
               ) : null}
             </Row>
@@ -240,11 +321,11 @@ export default function StrengthWorkout() {
         );
       })}
 
-      <Button title="+ Add exercise" variant="secondary" onPress={() => setPicking(true)} testID="strength-add-exercise" />
+      <Button title="+ Add Exercise" variant="secondary" onPress={() => setPicking(true)} testID="strength-add-exercise" />
       <Button
-        title={doneSets ? `Finish workout · ${doneSets} sets` : 'Tick or enter reps to finish'}
+        title={doneSets.length ? `Finish workout · ${working.length} sets` : 'Tick sets done to finish'}
         onPress={finish}
-        disabled={!doneSets}
+        disabled={!doneSets.length}
         testID="strength-finish"
       />
     </Screen>
@@ -252,7 +333,10 @@ export default function StrengthWorkout() {
 }
 
 const st = StyleSheet.create({
+  stat: { flex: 1, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: 10, gap: 2 },
   head: { color: colors.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 0.8, textAlign: 'center' },
+  note: { color: colors.text, fontSize: 14, paddingVertical: 6, width: '100%' },
+  typeChip: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 },
   cell: {
     flex: 1,
     // Web inputs have an intrinsic width; let flex size them instead.

@@ -46,6 +46,10 @@ tags: [core, muscles]
 - tapOn:
     id: hub-strength
 - assertVisible:
+    id: workouts-screen
+- tapOn:
+    id: workouts-start-empty
+- assertVisible:
     id: picker
 - tapOn:
     id: filter-glutes
@@ -58,6 +62,8 @@ tags: [core, muscles]
 - assertVisible:
     id: exercise-name
     text: "Hip Thrust"
+- tapOn:
+    id: exercise-tab-howto
 - assertVisible:
     id: exercise-primary-glutes
 - assertVisible:
@@ -83,8 +89,13 @@ tags: [core, muscles]
 - tapOn:
     id: strength-finish
 - assertVisible:
-    id: toast
-    text: "Workout saved .*"
+    id: workout-celebration
+- tapOn:
+    id: workout-back
+- tapOn:
+    id: workouts-back
+- tapOn:
+    id: home-muscles
 - assertVisible:
     id: body-screen
 - assertVisible:

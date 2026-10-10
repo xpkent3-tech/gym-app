@@ -98,6 +98,14 @@ describe('strength XP', () => {
   });
 });
 
+describe('strength PR XP', () => {
+  it('adds 50 XP per exercise with a PR', () => {
+    const mk = (id: string, date: string, kg: number) => ({ id, date, createdAt: Date.parse(date), exercises: [{ exerciseId: 'hip-thrust', sets: [{ reps: 5, kg }] }] });
+    const two = [mk('a', '2026-10-01', 60), mk('b', '2026-10-05', 70)];
+    expect(totalXp({ ...base, strength: two }, today) - totalXp(base, today)).toBe(75 * 2 + 50);
+  });
+});
+
 describe('hybrid streak', () => {
   it('counts runs, strength and sport sessions towards the weekly streak', () => {
     const mixed: ProgressInput = {

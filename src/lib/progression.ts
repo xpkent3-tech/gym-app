@@ -3,10 +3,11 @@ import type { PlanWeek } from './plan';
 import { rankRunner, TIERS } from './rank';
 import { prsSetBy } from './records';
 import type { StrengthSession } from './muscles';
+import { totalPrExercises } from './strength';
 import type { SportSession } from './sports';
 import type { Profile, Run } from './types';
 
-export const XP = { perKm: 10, session: 50, pr: 100, challenge: 150, friend: 25, invite: 50, strength: 75, sport: 75 };
+export const XP = { perKm: 10, session: 50, pr: 100, challenge: 150, friend: 25, invite: 50, strength: 75, strengthPr: 50, sport: 75 };
 export const STREAK_MIN_RUNS = 3;
 
 export interface ProgressInput {
@@ -97,6 +98,7 @@ export function totalXp(input: ProgressInput, today: string): number {
       input.friends.length * XP.friend +
       input.invitesSent * XP.invite +
       (input.strength?.length ?? 0) * XP.strength +
+      totalPrExercises(input.strength ?? []) * XP.strengthPr +
       (input.sessions?.length ?? 0) * XP.sport,
   );
 }

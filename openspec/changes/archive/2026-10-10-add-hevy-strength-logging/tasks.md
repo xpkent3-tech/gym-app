@@ -1,0 +1,6 @@
+- [x] 1. lib/strength.ts + tests (1RM, volume, history, records, PRs)
+- [x] 2. Store: routines, customExercises, set/exercise/session fields; XP for PRs
+- [x] 3. Components: ExercisePicker, LineChart, RestBar
+- [x] 4. Logger rewrite, workouts hub, workout summary, routine editor
+- [x] 5. Exercise library, custom exercise, exercise detail tabs
+- [x] 6. Maestro flows, lint, typecheck, jest, screenshots

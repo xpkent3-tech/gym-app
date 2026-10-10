@@ -1,24 +1,4 @@
-# strength-training Specification
-
-## Purpose
-Lets runners log the strength work their marathon plan needs, Hevy-style, with every exercise showing the muscles it trains.
-
-## Requirements
-
-### Requirement: Runner exercise library
-The system SHALL provide at least 15 runner-relevant exercises, each with primary and secondary muscles, coaching cues and why runners do it, searchable by name and filterable by muscle.
-
-#### Scenario: Filter by muscle
-- **WHEN** the user filters the exercise picker by Glutes
-- **THEN** only exercises with glutes as a primary or secondary muscle are listed
-
-### Requirement: Exercise detail
-The system SHALL show an exercise's primary muscles at full highlight and secondary muscles at partial highlight on the body map.
-
-#### Scenario: Hip thrust
-- **WHEN** the user opens Hip Thrust
-- **THEN** glutes are shown as primary and hamstrings as secondary
-
+## MODIFIED Requirements
 ### Requirement: Log a strength session
 The system SHALL let the user add exercises to a session, add sets with reps and optional weight in kg, remove sets, and finish the session, which is saved with today's date. Each set SHALL have a type (normal, warm-up, drop, failure), show the previous session's set for the same exercise, and be marked done with a check. Each exercise SHALL support a note and a rest timer; ticking a set done SHALL start the rest countdown. The header SHALL show elapsed time, volume and completed sets. A session with no completed sets SHALL NOT be saved.
 

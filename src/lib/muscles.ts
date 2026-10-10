@@ -74,16 +74,30 @@ export const RUN_WEIGHTS: Record<RunType, MuscleLoad> = {
 
 const RUN_SCALE = 0.5;
 
+export type SetType = 'normal' | 'warmup' | 'drop' | 'failure';
+
 export interface StrengthSet {
   reps: number;
   kg: number | null;
+  /** Defaults to normal. Warm-up sets never count toward volume, PRs or muscle load. */
+  type?: SetType;
+}
+
+export interface StrengthEntry {
+  exerciseId: string;
+  sets: StrengthSet[];
+  note?: string;
+  /** Rest timer in seconds; 0/undefined = off. */
+  restSec?: number;
 }
 
 export interface StrengthSession {
   id: string;
   date: string;
   createdAt: number;
-  exercises: { exerciseId: string; sets: StrengthSet[] }[];
+  exercises: StrengthEntry[];
+  durationSec?: number;
+  name?: string;
 }
 
 export function runLoad(run: Run): MuscleLoad {
@@ -104,7 +118,7 @@ export function sessionLoad(s: StrengthSession): MuscleLoad {
   return mergeLoads(
     s.exercises.flatMap((e) => {
       const ex = exerciseById(e.exerciseId);
-      return ex ? [exerciseLoad(ex, e.sets.filter((x) => x.reps > 0).length)] : [];
+      return ex ? [exerciseLoad(ex, e.sets.filter((x) => x.reps > 0 && x.type !== 'warmup').length)] : [];
     }),
   );
 }

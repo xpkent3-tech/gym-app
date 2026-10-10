@@ -40,6 +40,11 @@ function RootStack() {
           <Stack.Screen name="body" />
           <Stack.Screen name="strength" options={{ gestureEnabled: false }} />
           <Stack.Screen name="exercise/[id]" />
+          <Stack.Screen name="exercise/new" />
+          <Stack.Screen name="exercises" />
+          <Stack.Screen name="workouts" />
+          <Stack.Screen name="workout/[id]" />
+          <Stack.Screen name="routine/new" />
           <Stack.Screen name="sport/[sport]" />
           <Stack.Screen name="sport/log" options={{ gestureEnabled: false }} />
           <Stack.Screen name="sport/session/[id]" />
