@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { HeatLegend, heatColor, RotatingBody } from '@/components/BodyMap';
+import { HeatLegend, heatColor, RotatingBody, useBodyStyle } from '@/components/BodyMap';
 import { Body, Button, Card, H1, Label, Row, Screen } from '@/components/ui';
 import { formatDate } from '@/lib/dates';
 import { balanceInsight, intensities, MUSCLES, type MuscleId } from '@/lib/muscles';
@@ -11,6 +11,7 @@ import { useWeeklyMuscles } from '@/lib/useMuscles';
 import { useBodySex } from '@/lib/useBodySex';
 
 export default function BodyScreen() {
+  const style = useBodyStyle();
   const sex = useBodySex();
   const router = useRouter();
   const week = useWeeklyMuscles();
@@ -34,7 +35,7 @@ export default function BodyScreen() {
       </Card>
 
       {selected ? (
-        <Card testID="muscle-detail" style={{ borderColor: heatColor(heat[selected]) }}>
+        <Card testID="muscle-detail" style={{ borderColor: heatColor(heat[selected], style) }}>
           <Row style={{ justifyContent: 'space-between' }}>
             <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }} testID="muscle-detail-name">
               {MUSCLES.find((m) => m.id === selected)?.label}
@@ -90,12 +91,12 @@ export default function BodyScreen() {
         {ranked.map((m) => (
           <Pressable key={m.id} onPress={() => setSelected(m.id)} testID={`muscle-row-${m.id}`}>
             <Row style={{ gap: 10, paddingVertical: 6 }}>
-              <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: heatColor(heat[m.id]) }} />
+              <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: heatColor(heat[m.id], style) }} />
               <Text style={{ color: selected === m.id ? colors.primary : colors.text, fontWeight: '700', width: 100 }}>
                 {m.deep ? `${m.label} (deep)` : m.label}
               </Text>
               <View style={{ flex: 1, height: 6, backgroundColor: colors.surfaceAlt, borderRadius: 3 }}>
-                <View style={{ width: `${(heat[m.id] ?? 0) * 100}%`, height: 6, backgroundColor: heatColor(heat[m.id]), borderRadius: 3 }} />
+                <View style={{ width: `${(heat[m.id] ?? 0) * 100}%`, height: 6, backgroundColor: heatColor(heat[m.id], style), borderRadius: 3 }} />
               </View>
             </Row>
           </Pressable>

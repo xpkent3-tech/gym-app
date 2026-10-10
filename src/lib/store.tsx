@@ -8,7 +8,7 @@ import type { HealthSnapshot } from './health';
 import type { FoodEntry } from './nutrition';
 import type { SportSession } from './sports';
 import { generatePlan, type PlanWeek } from './plan';
-import type { Profile, Run } from './types';
+import type { BodyStyle, Profile, Run } from './types';
 
 const STORAGE_KEY = 'stride:v1';
 
@@ -27,6 +27,7 @@ export interface AppData {
   food: FoodEntry[];
   bodyLog: BodyEntry[];
   health: { connected: boolean; snapshot?: HealthSnapshot; syncedAt?: number };
+  prefs: { bodyStyle: BodyStyle };
 }
 
 type Action =
@@ -48,6 +49,7 @@ type Action =
   | { type: 'addBodyEntry'; entry: BodyEntry }
   | { type: 'deleteBodyEntry'; id: string }
   | { type: 'setHealth'; health: AppData['health'] }
+  | { type: 'setPrefs'; prefs: Partial<AppData['prefs']> }
   | { type: 'reset' };
 
 interface State extends AppData {
@@ -66,6 +68,7 @@ export const EMPTY: AppData = {
   food: [],
   bodyLog: [],
   health: { connected: false },
+  prefs: { bodyStyle: 'realistic' },
 };
 
 function sortRuns(runs: Run[]): Run[] {
@@ -93,6 +96,7 @@ export function migrate(raw: Partial<AppData>): AppData {
     food: data.food ?? [],
     bodyLog: data.bodyLog ?? [],
     health: data.health ?? { connected: false },
+    prefs: { ...EMPTY.prefs, ...data.prefs },
   };
 }
 
@@ -154,6 +158,8 @@ export function reducer(state: State, action: Action): State {
       return { ...state, bodyLog: state.bodyLog.filter((b) => b.id !== action.id) };
     case 'setHealth':
       return { ...state, health: action.health };
+    case 'setPrefs':
+      return { ...state, prefs: { ...state.prefs, ...action.prefs } };
     case 'inviteSent':
       return { ...state, invitesSent: state.invitesSent + 1 };
     case 'reset':
@@ -180,6 +186,7 @@ interface Store extends State {
   addBodyEntry: (e: BodyEntry) => void;
   deleteBodyEntry: (id: string) => void;
   setHealth: (h: AppData['health']) => void;
+  setPrefs: (p: Partial<AppData['prefs']>) => void;
   reset: () => void;
 }
 
@@ -225,6 +232,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addBodyEntry: (entry: BodyEntry) => dispatch({ type: 'addBodyEntry', entry }),
       deleteBodyEntry: (id: string) => dispatch({ type: 'deleteBodyEntry', id }),
       setHealth: (health: AppData['health']) => dispatch({ type: 'setHealth', health }),
+      setPrefs: (prefs: Partial<AppData['prefs']>) => dispatch({ type: 'setPrefs', prefs }),
       reset: () => dispatch({ type: 'reset' }),
     }),
     [],

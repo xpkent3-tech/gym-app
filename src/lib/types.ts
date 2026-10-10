@@ -2,6 +2,7 @@ import type { Body, NutritionGoal } from './nutrition';
 import type { SportId } from './sports';
 
 export type Sex = 'male' | 'female';
+export type BodyStyle = 'realistic' | 'classic';
 export type Experience = 'beginner' | 'intermediate' | 'advanced';
 export type RunType = 'easy' | 'long' | 'tempo' | 'intervals' | 'recovery' | 'race';
 

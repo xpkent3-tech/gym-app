@@ -1,0 +1,37 @@
+url: ${APP_URL || 'http://localhost:8081'}
+name: Body style - realistic by default, classic from Settings, persists
+tags: [muscles]
+---
+- runFlow: subflows/onboard.yaml
+- tapOn:
+    id: home-muscles
+- assertVisible:
+    id: legend-realistic
+- tapOn:
+    id: body-back
+- tapOn:
+    id: home-profile
+- tapOn:
+    id: profile-settings
+- assertVisible:
+    id: settings-body-style
+- tapOn:
+    id: style-classic
+- tapOn:
+    id: settings-back
+- tapOn:
+    id: profile-back
+- tapOn:
+    id: home-muscles
+- assertVisible:
+    id: legend-classic
+# Survives a relaunch
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: home-screen
+    timeout: 15000
+- tapOn:
+    id: home-muscles
+- assertVisible:
+    id: legend-classic

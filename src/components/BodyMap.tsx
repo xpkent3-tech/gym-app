@@ -1,15 +1,17 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useId, useRef, useState } from 'react';
 import { Animated, Platform, Pressable, Text, View } from 'react-native';
 import type { BodyPart, Slug } from 'react-native-body-highlighter';
 import { bodyBack } from 'react-native-body-highlighter/dist/assets/bodyBack';
 import { bodyFemaleBack } from 'react-native-body-highlighter/dist/assets/bodyFemaleBack';
 import { bodyFemaleFront } from 'react-native-body-highlighter/dist/assets/bodyFemaleFront';
 import { bodyFront } from 'react-native-body-highlighter/dist/assets/bodyFront';
-import Svg, { Defs, G, Path, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Defs, G, Path, Pattern, RadialGradient, Stop } from 'react-native-svg';
 
 import type { MuscleId, MuscleLoad } from '@/lib/muscles';
 import { colors } from '@/lib/theme';
-import type { Sex } from '@/lib/types';
+import type { BodyStyle, Sex } from '@/lib/types';
+
+export type { BodyStyle };
 
 // Anatomy artwork: react-native-body-highlighter (MIT, © ELABBASSI Hicham). Only the path data is used.
 
@@ -45,17 +47,20 @@ export const MUSCLE_SLUG: Record<MuscleId, Slug | null> = {
 
 const SKIN: Slug[] = ['head', 'hair', 'hands', 'feet', 'knees', 'ankles'];
 
+export const BodyStyleContext = createContext<BodyStyle>('realistic');
+export const useBodyStyle = () => useContext(BodyStyleContext);
+
 /**
  * The female artwork is drawn with a bodybuilder's frame. Narrow it about the centre line, more at the shoulders
- * than the hips, for a leaner, more typically female silhouette.
+ * than the hips, for a lean, athletic, typically female silhouette.
  */
 const FEMALE_WIDTH: Partial<Record<Slug, number>> = {
   head: 0.9,
   hair: 0.9,
   neck: 0.82,
   trapezius: 0.8,
-  deltoids: 0.8,
-  chest: 0.82,
+  deltoids: 0.82,
+  chest: 0.84,
   'upper-back': 0.82,
   biceps: 0.82,
   triceps: 0.82,
@@ -74,24 +79,47 @@ const FEMALE_WIDTH: Partial<Record<Slug, number>> = {
   ankles: 0.9,
   feet: 0.9,
 };
-/** Slugs whose internal separation lines are softened on the female body (no carved eight-pack). */
+
+/** Classic style: female core and chest are flattened (no carved eight-pack). */
 const FEMALE_SMOOTH: Slug[] = ['abs', 'obliques', 'chest'];
 
-const BASE = '#3A404D';
-const SKIN_FILL = '#262A33';
+// ---------- Palettes ----------
+const CLASSIC = {
+  rest: '#3A404D',
+  skin: '#262A33',
+  heat: ['#2E5590', '#3D8BFF', '#FFB020', '#FF6B4A'],
+  primary: colors.primary,
+  secondary: '#2A5A9E',
+};
 
-export const HEAT = ['#2E5590', '#3D8BFF', '#FFB020', '#FF6B4A'] as const;
+/** Exposed-muscle (écorché) palette: dull maroon at rest, brightening to hot orange when worked. */
+const REALISTIC = {
+  rest: '#62212A',
+  heat: ['#8F2830', '#C2353B', '#EB5536', '#FF8A3D'],
+  skin: '#C99A82',
+  chestSkin: '#D2AE96',
+  hair: '#3B2A22',
+  tendon: '#E8D3BF',
+  fascia: '#24090C',
+  glow: '#FFD9B0',
+};
 
-/** Heat ramp: rest → light → moderate → high → max. */
-export function heatColor(i: number | undefined): string {
-  if (!i || i <= 0.02) return BASE;
-  if (i < 0.25) return HEAT[0];
-  if (i < 0.5) return HEAT[1];
-  if (i < 0.8) return HEAT[2];
-  return HEAT[3];
+export const HEAT = CLASSIC.heat;
+
+function band(i: number | undefined): number {
+  if (!i || i <= 0.02) return -1;
+  if (i < 0.25) return 0;
+  if (i < 0.5) return 1;
+  if (i < 0.8) return 2;
+  return 3;
 }
 
-const SECONDARY = '#2A5A9E';
+/** Heat ramp: rest → light → moderate → high → max, in the given style. */
+export function heatColor(i: number | undefined, style: BodyStyle = 'realistic'): string {
+  const b = band(i);
+  const pal = style === 'realistic' ? REALISTIC : CLASSIC;
+  return b < 0 ? pal.rest : pal.heat[b];
+}
 
 function shade(hex: string, amt: number): string {
   const n = parseInt(hex.slice(1), 16);
@@ -99,7 +127,36 @@ function shade(hex: string, amt: number): string {
   return `#${[f(n >> 16), f((n >> 8) & 255), f(n & 255)].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
 }
 
-const GRADIENT_COLORS = [BASE, SKIN_FILL, SECONDARY, colors.primary, ...HEAT];
+function mix(a: string, b: string, t: number): string {
+  const pa = parseInt(a.slice(1), 16);
+  const pb = parseInt(b.slice(1), 16);
+  const ch = (x: number, y: number) => Math.round(x + (y - x) * t);
+  const r = ch(pa >> 16, pb >> 16);
+  const g = ch((pa >> 8) & 255, (pb >> 8) & 255);
+  const bl = ch(pa & 255, pb & 255);
+  return `#${[r, g, bl].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+}
+
+/** Muscle-fibre direction in degrees from vertical (mirrored for the other side). */
+const FIBRE_ANGLE: Partial<Record<Slug, number>> = {
+  quadriceps: 6,
+  hamstring: 0,
+  calves: 0,
+  tibialis: 4,
+  adductors: 22,
+  abs: 0,
+  obliques: 40,
+  chest: 70,
+  deltoids: 15,
+  biceps: 6,
+  triceps: 6,
+  forearm: 10,
+  trapezius: 55,
+  'upper-back': 45,
+  'lower-back': 0,
+  gluteal: 55,
+  neck: 20,
+};
 
 export type BodyMapProps = {
   view: BodyView;
@@ -112,27 +169,52 @@ export type BodyMapProps = {
   selected?: MuscleId | null;
   onPressMuscle?: (m: MuscleId) => void;
   width?: number;
+  /** Overrides the app-wide style (Settings → Body style). */
+  bodyStyle?: BodyStyle;
 };
 
-export function BodyMap({ view, sex = 'male', heat, primary = [], secondary = [], selected, onPressMuscle, width = 160 }: BodyMapProps) {
-  // Gradient ids must be unique per instance: on web, url(#id) resolves document-wide, and screens kept
+export function BodyMap({ view, sex = 'male', heat, primary = [], secondary = [], selected, onPressMuscle, width = 160, bodyStyle }: BodyMapProps) {
+  const ctxStyle = useBodyStyle();
+  const style = bodyStyle ?? ctxStyle;
+  const realistic = style === 'realistic';
+  // Gradient/pattern ids must be unique per instance: on web, url(#id) resolves document-wide, and screens kept
   // mounted (hidden) in the navigation stack would otherwise capture the reference.
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const gid = (c: string) => `g${uid}${c.slice(1)}`;
-  // Resolve a fill per artwork slug (max intensity when several muscles share one).
-  const slugFill = new Map<Slug, string>();
+  const pid = (a: number) => `p${uid}${a < 0 ? 'm' : ''}${Math.abs(a)}`;
+  const female = sex === 'female';
+
+  // Intensity band per artwork slug (max when several muscles share one); highlight mode maps to bands too.
+  const slugBand = new Map<Slug, number>();
   const slugMuscle = new Map<Slug, MuscleId>();
   for (const [m, slug] of Object.entries(MUSCLE_SLUG) as [MuscleId, Slug | null][]) {
     if (!slug) continue;
-    let color = BASE;
-    if (heat) {
-      const current = [...Object.entries(MUSCLE_SLUG)].filter(([, s]) => s === slug).map(([mm]) => heat[mm as MuscleId] ?? 0);
-      color = heatColor(Math.max(0, ...current));
-    } else if ([...Object.entries(MUSCLE_SLUG)].some(([mm, s]) => s === slug && primary.includes(mm as MuscleId))) color = colors.primary;
-    else if ([...Object.entries(MUSCLE_SLUG)].some(([mm, s]) => s === slug && secondary.includes(mm as MuscleId))) color = SECONDARY;
-    slugFill.set(slug, color);
+    let b = -1;
+    if (heat) b = band(heat[m]);
+    else if (primary.includes(m)) b = 3;
+    else if (secondary.includes(m)) b = 1;
+    slugBand.set(slug, Math.max(slugBand.get(slug) ?? -1, b));
     if (!slugMuscle.has(slug) || m === selected) slugMuscle.set(slug, m);
   }
+
+  const fillFor = (slug: Slug): string => {
+    const b = slugBand.get(slug) ?? -1;
+    if (realistic) {
+      if (slug === 'hair') return REALISTIC.hair;
+      if (slug === 'knees' || slug === 'ankles') return REALISTIC.tendon;
+      if (SKIN.includes(slug)) return REALISTIC.skin;
+      if (female && slug === 'chest') return b < 0 ? REALISTIC.chestSkin : mix(REALISTIC.chestSkin, REALISTIC.heat[b], 0.65);
+      return b < 0 ? REALISTIC.rest : REALISTIC.heat[b];
+    }
+    if (SKIN.includes(slug)) return CLASSIC.skin;
+    if (heat) return b < 0 ? CLASSIC.rest : CLASSIC.heat[b];
+    return b === 3 ? CLASSIC.primary : b === 1 ? CLASSIC.secondary : CLASSIC.rest;
+  };
+
+  const parts = ASSETS[sex][view];
+  const fills = [...new Set(parts.map((p) => fillFor(p.slug as Slug)))];
+  const showFibres = realistic && width >= 70;
+  const angles = showFibres ? [...new Set(Object.values(FIBRE_ANGLE).flatMap((a) => [a!, -a!]))] : [];
   const selectedSlug = selected ? MUSCLE_SLUG[selected] : null;
   const viewBox = view === 'front' ? '0 0 724 1448' : '724 0 724 1448';
   const strokeW = Math.max(1.5, 400 / width);
@@ -140,38 +222,68 @@ export function BodyMap({ view, sex = 'male', heat, primary = [], secondary = []
   return (
     <Svg width={width} height={width * 2} viewBox={viewBox}>
       <Defs>
-        {GRADIENT_COLORS.map((c) => (
+        {fills.map((c) => (
           <RadialGradient key={c} id={gid(c)} cx="38%" cy="30%" rx="75%" ry="75%" fx="35%" fy="25%">
-            <Stop offset="0" stopColor={shade(c, 0.28)} />
+            <Stop offset="0" stopColor={shade(c, realistic ? 0.22 : 0.28)} />
             <Stop offset="0.55" stopColor={c} />
-            <Stop offset="1" stopColor={shade(c, -0.45)} />
+            <Stop offset="1" stopColor={shade(c, realistic ? -0.55 : -0.45)} />
           </RadialGradient>
         ))}
+        {angles.map((a) => (
+          <Pattern key={a} id={pid(a)} width={7} height={7} patternUnits="userSpaceOnUse" patternTransform={`rotate(${a})`}>
+            <Path d="M0 0 L0 7" stroke="#FFFFFF" strokeOpacity={0.14} strokeWidth={1.3} />
+            <Path d="M3.5 0 L3.5 7" stroke="#000000" strokeOpacity={0.22} strokeWidth={1.1} />
+          </Pattern>
+        ))}
       </Defs>
-      {ASSETS[sex][view].map((part) => {
+      {parts.map((part) => {
         const slug = part.slug as Slug;
         const isSkin = SKIN.includes(slug);
-        const fill = isSkin ? SKIN_FILL : (slugFill.get(slug) ?? BASE);
+        const fill = fillFor(slug);
+        const b = slugBand.get(slug) ?? -1;
         const muscle = slugMuscle.get(slug);
         const isSel = !!selectedSlug && selectedSlug === slug;
-        const female = sex === 'female';
         const sx = female ? (FEMALE_WIDTH[slug] ?? 1) : 1;
         const cx = view === 'front' ? 362 : 1086;
-        const smooth = female && FEMALE_SMOOTH.includes(slug) && !isSel;
-        const paths = [...(part.path?.common ?? []), ...(part.path?.left ?? []), ...(part.path?.right ?? [])];
+        const smooth = !realistic && female && FEMALE_SMOOTH.includes(slug) && !isSel;
+        const glow = realistic && b === 3 && !isSel;
+        const angle = FIBRE_ANGLE[slug];
+        const fibres = showFibres && angle !== undefined && !(female && slug === 'chest');
+        const sides: [string[], 1 | -1][] = [
+          [part.path?.common ?? [], 1],
+          [part.path?.left ?? [], 1],
+          [part.path?.right ?? [], -1],
+        ];
+        // Realistic: dark fascia between muscles, pale tendinous inscriptions across the abs.
+        const stroke = isSel
+          ? '#FFFFFF'
+          : glow
+            ? REALISTIC.glow
+            : realistic
+              ? slug === 'abs'
+                ? REALISTIC.tendon
+                : REALISTIC.fascia
+              : smooth
+                ? shade(fill, -0.08)
+                : colors.bg;
+        const sw = isSel ? strokeW * 2.2 : glow ? strokeW * 1.4 : realistic && slug === 'abs' ? strokeW * 1.6 : female ? strokeW * 0.75 : strokeW;
         return (
           <G key={slug} transform={sx === 1 ? undefined : `translate(${cx} 0) scale(${sx} 1) translate(${-cx} 0)`}>
-            {paths.map((d, i) => (
-              <Path
-                key={i}
-                d={d}
-                fill={smooth ? shade(fill, -0.08) : `url(#${gid(fill)})`}
-                stroke={isSel ? '#FFFFFF' : smooth ? shade(fill, -0.08) : colors.bg}
-                strokeWidth={isSel ? strokeW * 2.2 : female ? strokeW * 0.75 : strokeW}
-                strokeLinejoin="round"
-                onPress={onPressMuscle && muscle && !isSkin ? () => onPressMuscle(muscle) : undefined}
-              />
-            ))}
+            {sides.flatMap(([ds, dir], si) =>
+              ds.map((d, i) => (
+                <G key={`${si}-${i}`}>
+                  <Path
+                    d={d}
+                    fill={smooth ? shade(fill, -0.08) : `url(#${gid(fill)})`}
+                    stroke={stroke}
+                    strokeWidth={sw}
+                    strokeLinejoin="round"
+                    onPress={onPressMuscle && muscle && !isSkin ? () => onPressMuscle(muscle) : undefined}
+                  />
+                  {fibres ? <Path d={d} fill={`url(#${pid(angle! * dir)})`} pointerEvents="none" /> : null}
+                </G>
+              )),
+            )}
           </G>
         );
       })}
@@ -242,15 +354,16 @@ export function RotatingBody(props: Omit<BodyMapProps, 'view'> & { testID?: stri
 }
 
 export function HeatLegend() {
+  const style = useBodyStyle();
   const steps = [
-    { c: BASE, l: 'Rest' },
-    { c: HEAT[0], l: 'Light' },
-    { c: HEAT[1], l: 'Moderate' },
-    { c: HEAT[2], l: 'High' },
-    { c: HEAT[3], l: 'Max' },
+    { c: heatColor(0, style), l: 'Rest' },
+    { c: heatColor(0.1, style), l: 'Light' },
+    { c: heatColor(0.3, style), l: 'Moderate' },
+    { c: heatColor(0.6, style), l: 'High' },
+    { c: heatColor(1, style), l: 'Max' },
   ];
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
+    <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }} testID={`legend-${style}`}>
       {steps.map((s) => (
         <View key={s.l} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: s.c }} />
