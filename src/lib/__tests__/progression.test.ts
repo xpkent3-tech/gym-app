@@ -90,3 +90,10 @@ describe('progression', () => {
     expect(c2.tierUp).toBe('Sub-Elite');
   });
 });
+
+describe('strength XP', () => {
+  it('awards 75 XP per session', () => {
+    const s = { id: 's', date: today, createdAt: 1, exercises: [{ exerciseId: 'plank', sets: [{ reps: 1, kg: null }] }] };
+    expect(totalXp({ ...base, strength: [s] }, today) - totalXp(base, today)).toBe(75);
+  });
+});

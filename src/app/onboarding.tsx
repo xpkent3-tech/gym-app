@@ -57,13 +57,13 @@ export default function Onboarding() {
       <View style={{ gap: 6, marginTop: 12 }}>
         <Label style={{ color: colors.primary }}>Stride</Label>
         <H1>Train for your marathon.{'\n'}See where you rank.</H1>
-        <Body>Log runs in seconds, follow a plan built around your race, and find out what percentile you're in.</Body>
+        <Body>Log runs in seconds, follow a plan built around your race, and find out what percentile you’re in.</Body>
       </View>
 
       {inviter ? (
         <Card style={{ borderColor: colors.primary }} testID="onboarding-invite">
           <Body>
-            🤝 <Body style={{ color: colors.text, fontWeight: '700' }}>{inviter.name}</Body> invited you. You'll be friends as soon as you finish setting up.
+            🤝 <Body style={{ color: colors.text, fontWeight: '700' }}>{inviter.name}</Body> invited you. You’ll be friends as soon as you finish setting up.
           </Body>
         </Card>
       ) : null}

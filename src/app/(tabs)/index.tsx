@@ -3,6 +3,10 @@ import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/Avatar';
+import { BodyPair } from '@/components/BodyMap';
+import { StrengthCard } from '@/components/StrengthCard';
+import { intensities } from '@/lib/muscles';
+import { useWeeklyMuscles } from '@/lib/useMuscles';
 import { ChallengeCard } from '@/components/ChallengeCard';
 import { LevelChip } from '@/components/LevelChip';
 import { FriendRunCard } from '@/components/FriendRunCard';
@@ -28,7 +32,9 @@ function greeting() {
 }
 
 export default function Home() {
-  const { profile, runs, plan, friends, invitesSent } = useStore();
+  const { profile, runs, plan, friends, invitesSent, strength } = useStore();
+  const muscles = useWeeklyMuscles();
+  const heat = useMemo(() => intensities(muscles.load), [muscles]);
   const today = todayISO();
   const [feed, setFeed] = useState<'you' | 'friends'>('you');
   const invite = useInvite();
@@ -79,6 +85,14 @@ export default function Home() {
 
       {progress ? <ChallengeCard challenge={progress.challenge} /> : null}
 
+      <Card onPress={() => router.push('/body')} testID="home-muscles">
+        <Row style={{ justifyContent: 'space-between' }}>
+          <Label>Muscles this week</Label>
+          <Text style={{ color: colors.primary, fontWeight: '700' }}>Open ›</Text>
+        </Row>
+        <BodyPair heat={heat} width={84} />
+      </Card>
+
       {rank ? (
         <Card onPress={() => router.push('/rank')} testID="home-rank-card" style={{ borderColor: rank.tier.color + '66' }}>
           <Label>Your rank</Label>
@@ -109,14 +123,25 @@ export default function Home() {
         ) : (
           friendRuns.map((r, i) => <FriendRunCard key={r.id} run={r} runner={runnerById(r.runnerId)!} index={i} />)
         )
-      ) : runs.length === 0 ? (
+      ) : runs.length === 0 && strength.length === 0 ? (
         <Card testID="history-empty">
           <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>No runs yet</Text>
           <Body>Log your first run to unlock your rank and start your streak.</Body>
           <Button title="Log your first run" onPress={() => router.push('/log')} testID="empty-log" />
         </Card>
       ) : (
-        runs.map((r, i) => <RunCard key={r.id} run={r} index={i} prs={prsSetBy(r, runs)} />)
+        [
+          ...runs.map((r) => ({ kind: 'run' as const, date: r.date, at: r.createdAt, run: r })),
+          ...strength.map((x) => ({ kind: 'strength' as const, date: x.date, at: x.createdAt, session: x })),
+        ]
+          .sort((a, b) => (a.date === b.date ? b.at - a.at : a.date < b.date ? 1 : -1))
+          .map((item, i) =>
+            item.kind === 'run' ? (
+              <RunCard key={item.run.id} run={item.run} index={runs.indexOf(item.run)} prs={prsSetBy(item.run, runs)} />
+            ) : (
+              <StrengthCard key={item.session.id} session={item.session} index={i} />
+            ),
+          )
       )}
     </Screen>
   );

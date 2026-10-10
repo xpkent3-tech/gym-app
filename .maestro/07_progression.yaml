@@ -11,7 +11,7 @@ tags: [engagement]
     text: "Run 3. this week to start a streak"
 - assertVisible:
     id: challenge-card
-# First 10 km run: 100 distance XP + 5K & 10K PRs = 300 XP → level 3, badges
+# First 10 km run: 100 distance XP + 5K & 10K PRs = 300 XP (+50 if today has a plan session) → level 3, badges
 - tapOn:
     id: tab-log
 - tapOn:
@@ -24,7 +24,7 @@ tags: [engagement]
     id: log-save
 - assertVisible:
     id: celebration-xp
-    text: "\\+300 XP"
+    text: "\\+3[05]0 XP"
 - assertVisible:
     id: celebration-level
     text: "LEVEL 3.*"
@@ -53,7 +53,7 @@ tags: [engagement]
     id: log-save
 - assertVisible:
     id: celebration-tier
-    text: ".*Rank up! You're now Sub-Elite"
+    text: ".*Rank up! You.re now Sub-Elite"
 - takeScreenshot: .maestro/output/celebration
 - tapOn:
     id: run-done

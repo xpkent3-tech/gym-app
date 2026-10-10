@@ -4,13 +4,12 @@ import { Pressable, Text, View } from 'react-native';
 
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { Body, Button, Card, H1, Label, ProgressBar, Row, Screen, Stat } from '@/components/ui';
-import { formatDate } from '@/lib/dates';
+import { formatDate, todayISO } from '@/lib/dates';
 import { formatDuration, formatKm } from '@/lib/pace';
 import { personalRecords, RECORD_DISTANCES } from '@/lib/records';
 import { useStore } from '@/lib/store';
 import { useProgress } from '@/lib/useProgress';
 import { weeklyTotals } from '@/lib/history';
-import { todayISO } from '@/lib/dates';
 import { colors } from '@/lib/theme';
 
 export default function ProfileTab() {

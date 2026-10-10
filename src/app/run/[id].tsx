@@ -2,10 +2,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
+import { BodyPair } from '@/components/BodyMap';
 import { ConfirmButton } from '@/components/ConfirmButton';
+import { intensities, runLoad } from '@/lib/muscles';
 
 import { Body, Button, Card, H1, Label, Pill, Row, Screen, Stat } from '@/components/ui';
-import { formatDate } from '@/lib/dates';
+import { formatDate, todayISO } from '@/lib/dates';
 import { formatDuration, formatKm, formatPace } from '@/lib/pace';
 import { rankRunner } from '@/lib/rank';
 import { prsSetBy } from '@/lib/records';
@@ -13,7 +15,6 @@ import { useStore } from '@/lib/store';
 import { colors } from '@/lib/theme';
 import { useInvite } from '@/lib/useInvite';
 import { celebrationFor } from '@/lib/progression';
-import { todayISO } from '@/lib/dates';
 import { runTypeMeta } from '@/lib/types';
 
 export default function RunDetail() {
@@ -70,7 +71,7 @@ export default function RunDetail() {
           </Row>
           {celebration.tierUp ? (
             <Text style={{ color: colors.gold, fontWeight: '800', fontSize: 16 }} testID="celebration-tier">
-              📈 Rank up! You're now {celebration.tierUp}
+              📈 Rank up! You’re now {celebration.tierUp}
             </Text>
           ) : null}
           {celebration.newBadges.length ? (
@@ -105,6 +106,11 @@ export default function RunDetail() {
           </Row>
         ) : null}
         {run.notes ? <Body>“{run.notes}”</Body> : null}
+      </Card>
+
+      <Card testID="run-muscles">
+        <Label>Muscles worked</Label>
+        <BodyPair heat={intensities(runLoad(run))} width={84} />
       </Card>
 
       {isFresh && rank ? (

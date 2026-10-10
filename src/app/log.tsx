@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Field } from '@/components/Field';
-import { Body, Button, Card, Chip, H1, Label, Row, Screen } from '@/components/ui';
+import { Body, Button, Card, Chip, Label, Row, Screen } from '@/components/ui';
 import { addDays, todayISO } from '@/lib/dates';
 import { uid } from '@/lib/id';
 import { formatPace, parseDistance, parseDuration } from '@/lib/pace';
@@ -56,6 +56,9 @@ export default function LogRun() {
         </Pressable>
       </Row>
 
+      {!params.duration ? (
+        <Button title="🏋️  Log strength workout instead" variant="ghost" testID="log-strength" onPress={() => router.replace('/strength')} />
+      ) : null}
       {!params.duration ? (
         <Button
           title="⏱  Start live run"

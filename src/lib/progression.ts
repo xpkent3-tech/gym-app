@@ -2,9 +2,10 @@ import { addDays, startOfWeek } from './dates';
 import type { PlanWeek } from './plan';
 import { rankRunner, TIERS } from './rank';
 import { prsSetBy } from './records';
+import type { StrengthSession } from './muscles';
 import type { Profile, Run } from './types';
 
-export const XP = { perKm: 10, session: 50, pr: 100, challenge: 150, friend: 25, invite: 50 };
+export const XP = { perKm: 10, session: 50, pr: 100, challenge: 150, friend: 25, invite: 50, strength: 75 };
 export const STREAK_MIN_RUNS = 3;
 
 export interface ProgressInput {
@@ -13,6 +14,7 @@ export interface ProgressInput {
   plan: PlanWeek[];
   friends: string[];
   invitesSent: number;
+  strength?: StrengthSession[];
 }
 
 /** XP needed to reach `level` (level 1 = 0 XP). */
@@ -86,7 +88,8 @@ export function totalXp(input: ProgressInput, today: string): number {
       prs * XP.pr +
       challengesCompleted(input, today) * XP.challenge +
       input.friends.length * XP.friend +
-      input.invitesSent * XP.invite,
+      input.invitesSent * XP.invite +
+      (input.strength?.length ?? 0) * XP.strength,
   );
 }
 

@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from 'react';
 
 import { runnerById, userFriendCode } from './community';
+import type { StrengthSession } from './muscles';
 import { generatePlan, type PlanWeek } from './plan';
 import type { Profile, Run } from './types';
 
@@ -17,6 +18,7 @@ export interface AppData {
   /** Runner id from an invite opened before onboarding. */
   pendingInvite: string | null;
   invitesSent: number;
+  strength: StrengthSession[];
 }
 
 type Action =
@@ -29,13 +31,15 @@ type Action =
   | { type: 'toggleKudos'; id: string }
   | { type: 'setPendingInvite'; id: string | null }
   | { type: 'inviteSent' }
+  | { type: 'addStrength'; session: StrengthSession }
+  | { type: 'deleteStrength'; id: string }
   | { type: 'reset' };
 
 interface State extends AppData {
   hydrated: boolean;
 }
 
-export const EMPTY: AppData = { profile: null, runs: [], friends: [], kudos: [], pendingInvite: null, invitesSent: 0 };
+export const EMPTY: AppData = { profile: null, runs: [], friends: [], kudos: [], pendingInvite: null, invitesSent: 0, strength: [] };
 
 function sortRuns(runs: Run[]): Run[] {
   return [...runs].sort((a, b) => (a.date === b.date ? b.createdAt - a.createdAt : a.date < b.date ? 1 : -1));
@@ -55,6 +59,7 @@ export function migrate(raw: Partial<AppData>): AppData {
     profile: data.profile ? withFriendCode(data.profile) : null,
     runs: sortRuns(data.runs ?? []),
     friends: (data.friends ?? []).filter((id) => !!runnerById(id)),
+    strength: data.strength ?? [],
   };
 }
 
@@ -83,6 +88,10 @@ export function reducer(state: State, action: Action): State {
       return { ...state, kudos: state.kudos.includes(action.id) ? state.kudos.filter((k) => k !== action.id) : [...state.kudos, action.id] };
     case 'setPendingInvite':
       return { ...state, pendingInvite: action.id };
+    case 'addStrength':
+      return { ...state, strength: [action.session, ...state.strength] };
+    case 'deleteStrength':
+      return { ...state, strength: state.strength.filter((s) => s.id !== action.id) };
     case 'inviteSent':
       return { ...state, invitesSent: state.invitesSent + 1 };
     case 'reset':
@@ -100,6 +109,8 @@ interface Store extends State {
   toggleKudos: (id: string) => void;
   setPendingInvite: (id: string | null) => void;
   inviteSent: () => void;
+  addStrength: (s: StrengthSession) => void;
+  deleteStrength: (id: string) => void;
   reset: () => void;
 }
 
@@ -136,6 +147,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       toggleKudos: (id: string) => dispatch({ type: 'toggleKudos', id }),
       setPendingInvite: (id: string | null) => dispatch({ type: 'setPendingInvite', id }),
       inviteSent: () => dispatch({ type: 'inviteSent' }),
+      addStrength: (session: StrengthSession) => dispatch({ type: 'addStrength', session }),
+      deleteStrength: (id: string) => dispatch({ type: 'deleteStrength', id }),
       reset: () => dispatch({ type: 'reset' }),
     }),
     [],

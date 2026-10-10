@@ -15,7 +15,7 @@ export default function LiveRun() {
   const params = useLocalSearchParams<{ type?: RunType; distance?: string }>();
   const router = useRouter();
   const [sw, setSw] = useState<Stopwatch>(() => start(IDLE, Date.now()));
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 250);

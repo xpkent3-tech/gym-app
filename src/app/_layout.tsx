@@ -31,6 +31,9 @@ function RootStack() {
         <Stack.Screen name="run/[id]" />
         <Stack.Screen name="friend/[id]" />
         <Stack.Screen name="profile" />
+        <Stack.Screen name="body" />
+        <Stack.Screen name="strength" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="exercise/[id]" />
       </Stack.Protected>
       <Stack.Protected guard={!onboarded}>
         <Stack.Screen name="onboarding" />

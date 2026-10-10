@@ -22,8 +22,8 @@ export default function Invite() {
       <Screen testID="invite-screen">
         <View style={{ marginTop: 40, gap: 8 }}>
           <Text style={{ fontSize: 44 }}>🤔</Text>
-          <H1 testID="invite-invalid">This invite isn't valid</H1>
-          <Body>The code “{code}” doesn't match any runner. Ask your friend to send it again.</Body>
+          <H1 testID="invite-invalid">This invite isn’t valid</H1>
+          <Body>The code “{code}” doesn’t match any runner. Ask your friend to send it again.</Body>
         </View>
         <Button title={profile ? 'Go home' : 'Get started'} onPress={() => router.replace(profile ? '/' : '/onboarding')} testID="invite-home" />
       </Screen>
@@ -49,11 +49,11 @@ export default function Invite() {
     <Screen testID="invite-screen">
       <View style={{ alignItems: 'center', gap: 10, marginTop: 32 }}>
         <Avatar name={inviter.name} color={inviter.color} size={88} />
-        <Label style={{ color: colors.primary }}>You're invited</Label>
+        <Label style={{ color: colors.primary }}>You’re invited</Label>
         <H1 style={{ textAlign: 'center' }} testID="invite-title">
           {first} wants to train with you
         </H1>
-        <Body style={{ textAlign: 'center' }}>Follow each other's marathon training, trade kudos, and see who climbs the rankings faster.</Body>
+        <Body style={{ textAlign: 'center' }}>Follow each other’s marathon training, trade kudos, and see who climbs the rankings faster.</Body>
       </View>
       <Card style={{ borderColor: tierFor(pct).color + '66' }}>
         <Row>

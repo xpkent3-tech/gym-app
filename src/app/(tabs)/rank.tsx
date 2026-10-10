@@ -65,7 +65,7 @@ export default function Rank() {
           {board.friendCount === 0 ? (
             <Card testID="board-empty">
               <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>Race your friends</Text>
-              <Body>Add friends to see who's putting in the miles and who's fastest.</Body>
+              <Body>Add friends to see who’s putting in the miles and who’s fastest.</Body>
               <Row style={{ gap: 8 }}>
                 <Button title="Find friends" variant="secondary" onPress={() => router.push('/friends')} style={{ flex: 1 }} testID="board-find" />
                 <Button title="Invite" onPress={invite} style={{ flex: 1 }} testID="board-invite" />
@@ -125,7 +125,7 @@ export default function Rank() {
       ) : !rank ? (
         <Card testID="rank-empty">
           <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>Unranked</Text>
-          <Body>Log a run of 3 km or more (or add a recent race in onboarding) and we'll predict your marathon and rank you against other marathoners.</Body>
+          <Body>Log a run of 3 km or more (or add a recent race in onboarding) and we’ll predict your marathon and rank you against other marathoners.</Body>
           <Button title="Log a run" onPress={() => router.push('/log')} testID="rank-log" />
         </Card>
       ) : (
@@ -138,7 +138,7 @@ export default function Rank() {
             <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }} testID="rank-tier">
               {rank.tier.name}
             </Text>
-            <Body style={{ textAlign: 'center' }}>You're faster than {100 - rank.topPct}% of marathon finishers in your group.</Body>
+            <Body style={{ textAlign: 'center' }}>You’re faster than {100 - rank.topPct}% of marathon finishers in your group.</Body>
             <Row style={{ marginTop: 12, gap: 24, alignSelf: 'stretch' }}>
               <Stat label="Predicted marathon" value={formatDuration(rank.prediction.timeSec)} testID="rank-predicted" />
               <Stat label="Based on" value={`${formatKm(rank.prediction.basis.distanceKm)} km`} sub={formatDuration(rank.prediction.basis.durationSec)} />
@@ -152,12 +152,12 @@ export default function Rank() {
                 {rank.nextTier.tier.name} · top {rank.nextTier.tier.maxTop}%
               </Text>
               <Body>
-                Run a marathon in {formatDuration(rank.nextTier.targetSec)} — that's {formatDuration(rank.nextTier.gapSec)} faster than your prediction.
+                Run a marathon in {formatDuration(rank.nextTier.targetSec)} — that’s {formatDuration(rank.nextTier.gapSec)} faster than your prediction.
               </Body>
             </Card>
           ) : (
             <Card>
-              <Text style={{ color: colors.gold, fontSize: 18, fontWeight: '800' }}>You're at the top tier. Legendary.</Text>
+              <Text style={{ color: colors.gold, fontSize: 18, fontWeight: '800' }}>You’re at the top tier. Legendary.</Text>
             </Card>
           )}
 
@@ -200,7 +200,7 @@ export default function Rank() {
         </Card>
       ) : null}
       <Body style={{ fontSize: 12, color: colors.textMuted }}>
-        Rankings compare your Riegel-predicted marathon to a model of marathon finish times by sex and age. They're estimates, not official results.
+        Rankings compare your Riegel-predicted marathon to a model of marathon finish times by sex and age. They’re estimates, not official results.
       </Body>
     </Screen>
   );

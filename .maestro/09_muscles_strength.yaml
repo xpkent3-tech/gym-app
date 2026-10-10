@@ -1,0 +1,96 @@
+url: ${APP_URL || 'http://localhost:8081'}
+name: Muscle map from runs, exercise muscles, strength session
+tags: [core, muscles]
+---
+- runFlow: subflows/onboard.yaml
+# A run lights up running muscles
+- tapOn:
+    id: tab-log
+- tapOn:
+    id: log-distance
+- inputText: "10"
+- tapOn:
+    id: log-duration
+- inputText: "55:00"
+- tapOn:
+    id: log-save
+- assertVisible:
+    id: run-muscles
+- tapOn:
+    id: run-done
+- tapOn:
+    id: home-muscles
+- assertVisible:
+    id: body-screen
+- assertVisible:
+    id: balance-missing
+    text: "No strength work this week: Glutes, Hamstrings, Core, Calves, Hip Flexors"
+- tapOn:
+    id: muscle-row-calves
+- assertVisible:
+    id: muscle-detail-name
+    text: "Calves"
+- assertVisible:
+    id: muscle-contributor-0
+    text: ".*10 km easy run"
+- tapOn:
+    id: body-rotate
+- assertVisible:
+    id: body-view
+    text: "Back"
+- tapOn:
+    id: body-back
+# Strength workout from the Log screen
+- tapOn:
+    id: tab-log
+- tapOn:
+    id: log-strength
+- assertVisible:
+    id: picker
+- tapOn:
+    id: filter-glutes
+- tapOn:
+    id: picker-search
+- inputText: "thrust"
+# Exercise detail shows its muscles
+- tapOn:
+    id: picker-info-hip-thrust
+- assertVisible:
+    id: exercise-name
+    text: "Hip Thrust"
+- assertVisible:
+    id: exercise-primary-glutes
+- assertVisible:
+    id: exercise-secondary-hamstrings
+- tapOn:
+    id: exercise-back
+- tapOn:
+    id: picker-add-0
+- tapOn:
+    id: picker-close
+- assertVisible:
+    id: strength-ex-0
+- assertVisible: "Quads · Glutes|Glutes"
+- tapOn:
+    id: set-0-0-kg
+- inputText: "60"
+- tapOn:
+    id: set-0-0-done
+- tapOn:
+    id: set-0-1-done
+- tapOn:
+    id: set-0-2-done
+- tapOn:
+    id: strength-finish
+- assertVisible:
+    id: toast
+    text: "Workout saved .*"
+- assertVisible:
+    id: body-screen
+- assertVisible:
+    id: balance-missing
+    text: "No strength work this week: Core, Calves, Hip Flexors"
+- tapOn:
+    id: body-back
+- assertVisible:
+    id: strength-card-0
